@@ -282,17 +282,229 @@ int main(int argc, char * argv[] )
 
 ## step03-3_將今天的程式上傳到GitHub
 
-0. 安裝 Git, 啟動 Git Bash
+- 0. 安裝 Git, 啟動 Git Bash
+- 1. 進入desktop桌面, 將雲端 clone下來, 進入 2022graphicsb
+- 2. start . 開啟檔案總管, 把今天的 4個程式 copy 到裡面
+- 3. 把今天的檔案 add 加進帳冊
+- 4. 確認/認可 commit 今天的修改
+- 4.0. git config --global user.email jsyeh@mail.mcu.edu.tw
+- 4.0. git config --global user.name jsyeh@mail
+- 4.1. git commit -m "加入week02"
+- 5. 推送 push 上雲端
 
-1. 進入desktop桌面, 將雲端 clone下來, 進入 2022graphicsb
 
-2. start . 開啟檔案總管, 把今天的 4個程式 copy 到裡面
+# Week03
+電腦圖學 2023-03-02 Week03
+1. 技巧: 用 mouse 幫忙寫作業
+2. 主題: 移動 Translate
+3. 實作: glTranslatef(x,y,z) 配合 glPushMatrix() glPopMatrix()
+4. 問題與回覆Q&A: Blog, 作業
 
-3. 把今天的檔案 add 加進帳冊
+## step01-0_上課前,先介紹HW1、HW2的評分方式,老師使用HTML配合Browser來一起評分。介紹Blogger裡可以改日期, 要加上適當的標題,以推廣你的品牌, 要加上正確標籤,才能評分。顯示名稱只是字串,你可在設定裡自己改。不可以偷老師的圖、老師的字。
 
-4. 確認/認可 commit 今天的修改
-4.0. git config --global user.email jsyeh@mail.mcu.edu.tw
-4.0. git config --global user.name jsyeh@mail
-4.1. git commit -m "加入week02"
+## step01-1_要下載課本的範例, 跑 Transformation.exe 並看它的glTranslatef()移動部分的參數
 
-5. 推送 push 上雲端
+- https://jsyeh.org/3dcg10 下載 windows.zip 及 data.zip
+	- windows.zip 解壓縮 下載\windows\Transformation.exe (今天的主角)
+	- data.zip    解壓縮 下載\windows\data\很多3D模型檔  (小心目錄)
+- 執行(今天的主角) 
+	- glTranslatef( x, y, z ); 綠色的數字,上下拉動它
+	- (其他也可以看看, 下週會教)
+	- (右上角可右鍵換模型)
+- 如果閃退, 就是你的 data.zip 解錯目錄
+	- 不是 下載\windows\data\data\很多模型檔
+	- 是 下載\windows\data\很多模型檔
+
+## step02-1_CodeBlocks-File-New-Project, GLUT專案, 檔名 week03-1_translate (事先要把 freeglut 裝好,改出 libglut32.a ), 貼上上週的10行GLUT程式。
+
+```cpp
+///把177行程式全刪, 貼上上週的10行GLUT程式
+#include <GL/glut.h>
+void display()
+{
+    glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week03");
+
+    glutDisplayFunc(display);
+
+    glutMainLoop();
+}
+```
+
+## step02-2_想要貼出漂亮的程式碼,可用 GitHub Gist功能, 新增一段程式, 檔名寫好,會照副檔名(.c .cpp .java .cs .py .html .javascript .css) 的文法來變色。使用 Embedded JavaScript 的方式, 便能把那一行程式, 用 HTML模式, 插到你Blog的 HTML 裡面, 前提是你要看得懂 HTML 才能正確插入。
+
+```html
+<script src="https://gist.github.com/jsyeh/45baebf225cf360aeb9d746ec35b6743.js"></script>
+```
+
+## step02-3_實作: glTranslatef(x,y,z) 配合 glPushMatrix() glPopMatrix() 便能正確將物體移到想要的位置。程式的排版有點奇怪,會在 push時往右推, pop時往左還原。。
+
+
+```cpp
+///把177行程式全刪, 貼上上週的10行GLUT程式
+#include <GL/glut.h>
+void display()
+{
+    glPushMatrix(); ///備份矩陣
+        glTranslatef( 0.5, 0.5, 0); ///它會改變你的矩陣
+        glutSolidTeapot( 0.3 );
+    glPopMatrix(); ///還原矩陣
+
+    glutSwapBuffers();
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week03");
+
+    glutDisplayFunc(display);
+
+    glutMainLoop();
+}
+```
+
+## step03-1_想要加上 mouse 的移動功能, 所以新增GLUT專案 week03-2_translate_mouse 裡面模仿前面的程式, 但再配合 global 變數 float X=0, Y=0, Z=0; 來讓 glTranslate(X, Y, Z); 照著移動。 void mouse() 裡面, 用小寫的x,y參數,換算出 -1..+1的座標。glutMouseFunc(mouse)會註冊好mouse()函式的。
+
+```cpp
+///week03-2_translate_mouse 要加上 mouse 的移動功能
+///(1) File-New-Project, GLUT專案
+///(2) 貼上 week03-1_translate 的程式
+///(3) 要使用 global 變數,來讓座標改變
+#include <GL/glut.h>
+float X=0, Y=0, Z=0; ///step03-1 使用 global 變數
+void display()
+{
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );///step03-1 清背景
+    glPushMatrix(); ///備份矩陣
+        glTranslatef( X, Y, Z ); ///step03-1 照著 X,Y,Z來移動
+        glutSolidTeapot( 0.3 );
+    glPopMatrix(); ///還原矩陣
+
+    glutSwapBuffers();
+}
+void mouse( int button, int state, int x, int y ) ///step03-1 mouse()
+{       ///     左中右鍵    按下/放開 小x   小y   0...300
+    X =  (x-150)/150.0; ///step03-1 減一半、除一半
+    Y = -(y-150)/150.0; ///step03-1 減一半、除一半、y變負的
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week03");
+
+    glutMouseFunc(mouse); ///step03-1 設定好 mouse函式
+    glutDisplayFunc(display);
+
+    glutMainLoop();
+}
+```
+
+## step03-3_如果了解 void mouse()函式, 有機會用它來幫忙寫程式, 讓作業可以做得更漂亮。開新的 GLUT專案 week03-3_mouse_homework 來做事。
+
+
+```cpp
+///week03-3_mouse_homework
+///如果了解 void mouse()函式, 有機會用它來幫忙寫程式,
+///讓作業可以做得更漂亮。開新的 GLUT專案 week03-3_mouse_homework 來做事。
+///(1) File-New-Project, GLUT專案
+///(2) 貼上 week03-2_translate_mouse 的程式
+///(3) 要使用 if()及printf()
+#include <GL/glut.h>
+#include <stdio.h> ///step03-2 printf()
+float X=0, Y=0, Z=0; ///step03-1 使用 global 變數
+void display()
+{
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );///step03-1 清背景
+    ///step03-2 把程式刪掉,留下 glClear()清背景 glutSwapBuffers()交換畫出
+
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(-0.02, 0.23);
+    glVertex2f(-0.02, 0.29);
+    glVertex2f(0.00, 0.40);
+    glVertex2f(0.03, 0.50);
+    glVertex2f(0.09, 0.59);
+    glVertex2f(0.19, 0.65);
+    glVertex2f(0.32, 0.66);
+    glVertex2f(0.41, 0.59);
+    glVertex2f(0.43, 0.44);
+    glVertex2f(0.41, 0.38);
+    glVertex2f(0.39, 0.34);
+    glVertex2f(0.35, 0.30);
+    glVertex2f(0.31, 0.27);
+    glVertex2f(0.27, 0.22);
+    glVertex2f(0.25, 0.19);
+    glVertex2f(0.23, 0.17);
+    glVertex2f(0.21, 0.15);
+    glEnd();
+
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(-0.39, 0.14);
+    glVertex2f(-0.45, 0.18);
+    glVertex2f(-0.51, 0.25);
+    glVertex2f(-0.57, 0.37);
+    glVertex2f(-0.57, 0.50);
+    glVertex2f(-0.45, 0.65);
+    glVertex2f(-0.37, 0.67);
+    glVertex2f(-0.31, 0.65);
+    glVertex2f(-0.29, 0.53);
+    glVertex2f(-0.33, 0.43);
+    glVertex2f(-0.33, 0.34);
+    glVertex2f(-0.33, 0.25);
+    glVertex2f(-0.33, 0.21);
+    glVertex2f(-0.30, 0.18);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+    glVertex2f(-0.46, 0.10);
+    glVertex2f(-0.34, 0.18);
+    glVertex2f(-0.15, 0.25);
+    glVertex2f(0.05, 0.24);
+    glVertex2f(0.27, 0.11);
+    glVertex2f(0.25, -0.05);
+    glVertex2f(0.09, -0.11);
+    glVertex2f(-0.10, -0.15);
+    glVertex2f(-0.28, -0.15);
+    glVertex2f(-0.49, -0.06);
+    glEnd();
+    glutSwapBuffers();
+}
+void mouse( int button, int state, int x, int y ) ///step03-1 mouse()
+{       ///     左中右鍵    按下/放開 小x   小y   0...300
+    X =  (x-150)/150.0; ///step03-1 減一半、除一半
+    Y = -(y-150)/150.0; ///step03-1 減一半、除一半、y變負的
+    ///printf("%d %d %d %d\n", button, state, x, y); ///step03-2 先試印參數
+    if(state==GLUT_DOWN) printf("    glVertex2f(%.2f, %.2f);\n", X, Y); ///step03-2
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week03");
+
+    glutMouseFunc(mouse); ///step03-1 設定好 mouse函式
+    glutDisplayFunc(display);
+
+    glutMainLoop();
+}
+```
+
+## step03-3_將程式用 Git指令上傳
+
+- 0. 安裝Git, 開啟 Git Bash
+- 1. 進入 cd desktop, 雲端 git clone https://網址下載, 進入cd 2023graphicsb
+- 2. start . 開啟檔案總管, 把今天的程式複製進來
+- 3. 用 git add . 加入帳冊 (前後用 git status 綠色紅色)
+- 4. 用 git commit -m "訊息" 確認、認可
+- 4.0. git config --global user.email jsyeh@mail.mcu.edu.tw
+- 4.0. git config --global user.name jsyeh
+- 4.0. 要做上面2行, 才會知道 who you are
+- 4.1. git commit -m "add week03"
+- 5. 用 git push 推送上雲端
