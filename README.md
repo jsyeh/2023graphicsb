@@ -508,3 +508,299 @@ int main(int argc, char* argv[] )
 - 4.0. 要做上面2行, 才會知道 who you are
 - 4.1. git commit -m "add week03"
 - 5. 用 git push 推送上雲端
+
+
+# Week04
+
+1. 主題: 旋轉 Rotate
+2. 實作: glRotatef(角度, x, y, z);
+3. 主題: 矩陣 Matrix
+4. 利用 mouse motion 來控制
+
+## step01-1_上課的範例 jsyeh.org/3dcg10 下載 data win32, 解壓縮到對的目錄, 執行Transformation.exe 並且觀察它的轉法,使用右手來理解, 姆指是轉動軸, 其餘四指是轉動的方向。
+
+windows.zip => 下載\windows\Transformation.exe
+data.zip    => 下載\windows\data\模型檔
+
+## step01-2_先了解「旋轉軸為Y軸」時怎麼轉, 再了解「旋轉軸為X軸」是怎麼轉。最後要了解「Z軸」是怎麼轉。在右手座標系統裡,z軸是「用右手4指,本來向著x軸,掃向y軸後, 決定z軸的方向」
+
+## step01-3_如果是奇怪的旋轉軸, ex. (1,1,0)的話, 請想像在吃塩酥雞時,用竹籤去插塩酥雞時, 無聊的人在轉竹籤時, 就是那個感覺。所以可以看到人物的右肩往前撞的畫面。
+
+## step02-0_要開起 CodeBlocks File-New-Project 存成 week04-1_rotate 專案 (先把桌面的 freeglut 裝好, 記得 lib的 libfreeglut.a 複製成 libglut32.a)。
+
+## step02-1_先研究一下177行範例程式, 裡面的 display()有6塊程式, 會用 glPushMatrix() 與 glPopMatrix() 把程式包起來, 裡面有移動or旋轉的程式碼, 然後畫茶壼。把程式改成上週的10行GLUT程式, 然後利用全域變數 angle角度 float angle = 0; 接著在 display()裡, glRotatef(angle, 0, 1, 0) 轉動angle度, 最後 angle++ 增加一些角度。main()裡則是在 glutDisplay() 旁邊加上 glutIdleFunc(display) 告訴GLUT閒閒有空時,就重畫畫面。接著便看到茶壼在轉動了。
+
+```cpp
+///先看範例的177行程式, 把它移到Notepad++
+///換上我們上週的程式
+#include <GL/glut.h>
+float angle = 0; ///step02-1 全域變數 angle角度
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);///清畫面
+    glPushMatrix(); ///step02-1 備份矩陣
+        glRotatef(angle, 0, 1, 0); ///step02-1 轉angle度
+        glutSolidTeapot( 0.3 );
+    glPopMatrix(); ///step02-1 還原矩陣
+    glutSwapBuffers();
+    angle++; ///step02-1 角度 ++
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week03");
+
+    glutDisplayFunc(display);
+    glutIdleFunc(display); ///step02-1 閒閒有空,就重畫畫面
+    glutMainLoop();
+}
+```
+
+## step02-2_讓大家看到打光的結果。請開新的 GLUT專案, week04-2_rotate_light 專案。在 177行程式裡, 用 Ctrl-F找light這個字, 可以找到2大段程式碼。再把 week04-1_rotate的程式拿來改造, 加上剛找到的2大段程式, 便能完成打光。
+
+最前面先放陣列的宣告
+
+```cpp
+const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
+const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+
+const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
+const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
+const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat high_shininess[] = { 100.0f };
+```
+我們要發明一個函式 void myLight() 裡面有以下程式
+```cpp
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHTING);
+
+    glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+```
+
+最後在 main() 裡面呼叫 myLight()函式, 便能簡單完成打光的設定。
+(目前的打光還有點怪怪的, 前後的面有倒過來, 導致光的位置不對。先不管怪怪的問題。)
+
+
+```cpp
+///Week04-2_rotate_light 先貼上剛剛的程式 week04-1_rotate
+#include <GL/glut.h>
+const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
+const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+
+const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
+const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
+const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat high_shininess[] = { 100.0f };
+
+void myLight()
+{
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHTING);
+
+    glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+}
+
+float angle = 0; ///step02-1 全域變數 angle角度
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);///清畫面
+    glPushMatrix(); ///step02-1 備份矩陣
+        glRotatef(angle, 0, 1, 0); ///step02-1 轉angle度
+        glutSolidTeapot( 0.3 );
+    glPopMatrix(); ///step02-1 還原矩陣
+    glutSwapBuffers();
+    angle++; ///step02-1 角度 ++
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week04");
+
+    myLight(); ///step02-2
+    glutDisplayFunc(display);
+    glutIdleFunc(display); ///step02-1 閒閒有空,就重畫畫面
+    glutMainLoop();
+}
+```
+
+
+## step03-1_在Transform的範例中,可以交換swap translate和rotate的程式, 竟然會造成自轉、公轉的差別。但到底怎麼理解呢, 有個口訣是「左耳靠在左肩上, 讀程式就從下往上讀」。
+
+```
+藍色的車子
+```
+
+```
+長胖的
+藍色的車子
+```
+
+```
+移到右邊的
+長胖的
+藍色的車子
+```
+
+```
+轉動整個世界,
+裡面有移到右邊的
+長胖的
+藍色的車子
+```
+
+```cpp
+glRotatef(angle, 0, 1, 0);
+glTranslatef(0.59, 0, 0);
+glScalef(1.53, 1, 1);
+glBegin(...) 畫出藍色的車子
+```
+
+## step03-2_老師拿2個範例來解釋
+下面則是另外一個程式
+
+```cpp
+glTranslatef(0.59, 0, 0); //這兩行交換
+glRotatef(angle, 0, 1, 0); //這兩行交換
+glScalef(1.53, 1, 1);
+glBegin(...) 畫出藍色的車子
+```
+
+```
+藍色的車子
+```
+
+```
+長胖的
+藍色的車子
+```
+
+```
+轉動
+長胖的
+藍色的車子
+```
+
+```
+把下面那個移到右邊去
+轉動
+長胖的
+藍色的車子
+```
+
+
+## step03-3_新開 GLUT專案 week04-3_rotate_translate, 先把 week04-1_rotate複製過來, 把它變成藍色的 glColor3f(0,0,1)
+
+
+```cpp
+///換成 week04-1_rotate的程式,拿來改寫
+#include <GL/glut.h>
+float angle = 0; ///step02-1 全域變數 angle角度
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);///清畫面
+ 
+    glPushMatrix(); ///step02-1 備份矩陣
+        glTranslatef(0.5, 0, 0);///step03-3 移到右邊的
+        glRotatef(angle, 0, 1, 0); ///step03-3 旋轉中的
+        glColor3f(0,0,1);///step03-3 藍色的
+        glutSolidTeapot( 0.3 ); ///茶壼
+    glPopMatrix(); ///step02-1 還原矩陣
+
+    glutSwapBuffers();
+    angle++; ///step02-1 角度 ++
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week04");
+
+    glutDisplayFunc(display);
+    glutIdleFunc(display); ///step02-1 閒閒有空,就重畫畫面
+    glutMainLoop();
+}
+```
+
+## step03-4_再畫出另外一個寫法, 同時標示框線
+
+```cpp
+///week04-3_rotate_translate
+///換成 week04-1_rotate的程式,拿來改寫
+#include <GL/glut.h>
+float angle = 0; ///step02-1 全域變數 angle角度
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);///清畫面
+
+    glPushMatrix(); ///step02-1 備份矩陣
+        glTranslatef(0.5, 0, 0);///step03-3 移到右邊的
+        glRotatef(angle, 0, 1, 0); ///step03-3 旋轉中的
+        glColor3f(0,0,1);///step03-3 藍色的
+        glutSolidTeapot( 0.3 ); ///茶壼
+    glPopMatrix(); ///step02-1 還原矩陣
+
+    glPushMatrix(); ///step02-1 備份矩陣
+        glRotatef(angle, 0, 1, 0); ///step03-4 旋轉中的
+        glTranslatef(0.5, 0, 0);///step03-4 移到右邊的
+        glColor3f(1,1,0);///step03-4 黃色的
+        glTranslatef(0, 0.5, 0); ///step03-4 往上移動的
+        glutSolidTeapot( 0.3 ); ///茶壼
+    glPopMatrix(); ///step02-1 還原矩陣
+
+    glutSwapBuffers();
+    angle++; ///step02-1 角度 ++
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week04");
+
+    glutDisplayFunc(display);
+    glutIdleFunc(display); ///step02-1 閒閒有空,就重畫畫面
+    glutMainLoop();
+}
+```
+
+## step03-5_最後用 Git 把今天的程式上傳到GitHub
+- 0. 安裝Git, 開Git Bash
+- 1. 進入桌面 cd desktop 複製你的程式 git clone https://網址  再進入你的目錄 2023graphicsb
+- 2. 開啟檔案總管 start . 整理今天的程式
+- 3. 加入 git add .
+- 4. 確認 git commit -m "week04"
+- 4.0. git config --global user.email jsyeh@mail.mcu.edu.tw
+- 4.0. git config --global user.name jsyeh
+- 4.1. git commit -m week04
+- 5. 推送上雲端 git push
