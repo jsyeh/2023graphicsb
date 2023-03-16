@@ -804,3 +804,157 @@ int main(int argc, char* argv[] )
 - 4.0. git config --global user.name jsyeh
 - 4.1. git commit -m week04
 - 5. 推送上雲端 git push
+
+
+# Week05
+
+## step01-1_把上課的教材 jsyeh.org 的 3dcg10 裡的 data 及 windows.zip 下載、執行Transformation.exe 要先複習上週的「移動-旋轉」與「旋轉-移動」
+
+「移動-旋轉」
+```cpp
+glTranslatef(0.8, 0, 0); //移動到右邊
+glRotatef(角度, 0, 1, 0);//旋轉
+glScalef(1, 2, 1);//長高的
+glBegin(...);// 藍色車子
+...
+```
+
+與「旋轉-移動」
+```cpp
+glRotatef(角度, 0, 1, 0);//旋轉
+glTranslatef(0.8, 0, 0); //移動到右邊
+glScalef(1, 2, 1);//長高的
+glBegin(...);// 藍色車子
+...
+```
+
+## step01-2_新開GLUT專案,week05-1_TRT_translate_rotate 看兩種不同的轉動的差別。先把week04-1的程式複製過來, 再把 display()裡, 改成 紅色茶壼、綠色茶壼, 裡面的轉動、移動的順序不同。
+
+```cpp
+///Week05-1_TRT_translate_rotate 把上週的 week04-1 拿來用
+///旋轉軸改成 0,0,1 z軸, 再複製成 紅色、綠色
+#include <GL/glut.h>
+float angle = 0;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glColor3f(1, 0, 0);///紅色
+    glPushMatrix();
+        glRotatef(angle, 0, 0, 1); ///step02-1 改成 0,0,1 z軸
+        glTranslatef(0.8, 0, 0);///移到右邊
+        glutSolidTeapot( 0.3 );
+    glPopMatrix();
+
+    glColor3f(0, 1, 0);///綠色
+    glPushMatrix();
+        glTranslatef(0.8, 0, 0);///移到右邊
+        glRotatef(angle*1.5, 0, 0, 1); ///step02-1 改成 0,0,1 z軸
+        glutSolidTeapot( 0.3 );
+    glPopMatrix();
+
+    glutSwapBuffers();
+    angle++;
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week05");
+
+    glutDisplayFunc(display);
+    glutIdleFunc(display);
+    glutMainLoop();
+}
+```
+
+## step02-1_要用老師的 opengl_TRT_demo 的互動程式 跑起來。按 ToDraw 可以畫身體、畫頭、畫手。可按住程式碼,移動它的位置。先只放一個旋轉(在手的前面,只影響手)會對正中心轉, 有點怪怪的。改成移動, 讓手臂的關節移到正中心。再來,把轉動加上去, 手臂會在肚臍上轉動, 有點變態。最後, 把移動加上去, 讓旋轉中的手臂「掛」到肩膀上。
+
+```cpp
+myDrawObject(0); //畫身體
+glPushMatrix();
+  glTranslatef(0.17, 0.38, 0);  //(3) 最後,把手臂掛到肩上
+  glRotatef(angle, 0, 0, 1);    //(2) 轉動
+  glTranslatef(-0.17, -0.38, 0);//(1)把關節放正中心
+  myDrawObject(1); //畫手臂
+glPopMatrix();
+```
+
+## step02-2_接下來講解下週的考試題目, 以奇異博士手上拿著寶石為例, drawHand()可以畫手,但它的旋轉中心沒有放在正中心, 怎麼辦 (1) 先把關節移到正中心。(2)上面再加上轉動,小心轉動軸不要寫錯、角度的正負號也不能寫錯。(3)最後, 最上面,就簡單的把會轉動的手「掛到」手肘上面去。
+
+```cpp
+glPushMatrix();
+  glTranslatef(-0.5, -0.9, 0); //20分, (3) 最後,把它掛在肩上
+  glRotatef(-45, 0,0,1);       //20分, (2) 轉動,小心正負號
+  glTranslatef(-0.8, 0.9, 0);  //20分, (1) 把關節移到正中心
+  drawHand(); 
+glPopMatrix();
+```
+
+## step03-1_開新GLUT專案, week05-2_TRT_robot 要做出TRT關節轉動。先把 week05-1的程式拿來改。用 glutSolidCube(1)可畫出寬度1的方塊, 發明myCube()函式,可以用glScalef(0.5, 0.2, 0.2) 把方塊調成細長狀, 再把矩陣保護起來。再來用小考的T-R-T觀念, 慢慢把方塊變成正確轉動的手臂 (1) 調中心, (2)轉動, (3)掛到對的位置。
+
+```cpp
+///Week05-2_TRT_robot 貼上 week05-1_TRT_translate_rotate 的程式
+///Week05-1_TRT_translate_rotate 把上週的 week04-1 拿來用
+///旋轉軸改成 0,0,1 z軸, 再複製成 紅色、綠色
+#include <GL/glut.h>
+float angle = 0;
+void myCube()///step2 改函式
+{
+    glPushMatrix();///step1
+        glScalef(0.5, 0.2, 0.2);///step1 調大小
+        glutSolidCube(1); ///step1 正方塊
+    glPopMatrix();///step1
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glColor3f(1,1,1);///step4 白色的
+    glutSolidCube(1); ///step4 身體
+
+    glPushMatrix();///step2
+        glTranslatef(x
+        glColor3f(0,1,0);///step4 綠色的
+        myCube(); ///step2 改函式
+    glPopMatrix();///step2
+
+    glPushMatrix();///step2
+        glTranslatef(-0.5, 0.5, 0);///step5 掛到右上角去
+        glRotatef(angle, 0, 0, 1);///step2 轉它
+        glTranslatef(0.25, 0, 0);///step3 往右移動 0.25 讓關節在正中心
+        glColor3f(0,1,0);///step4 綠色的
+        myCube(); ///step2 改函式
+    glPopMatrix();///step2
+
+    glutSwapBuffers();
+    angle++;
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week05");
+
+    glutDisplayFunc(display);
+    glutIdleFunc(display);
+    glutMainLoop();
+}
+```
+
+## step03-2_了解 Matrix在做什麼事。其實就是改變座標, 程式碼倒著看, 是因為最下面畫點的時候, 結合的順序是慢慢往上理解。因此理解時,就從下往上看。電腦運算時, 從上往下改變矩陣。
+
+## step03-3_用Git指令, 上傳今天的2個程式到GitHub
+
+- 0. 安裝 Git 開啟 Git Bash
+- 1. 進入桌面 cd desktop 雲端複製下來 git clone 網址, 再進入 cd 2023graphicsb
+- 2. 開啟檔案總管 start . 整理今天的程式
+- 3. 加入帳冊 git add .
+- 4. 確認修改 git commit -m week05 
+- 4.0 要先 git config --global user.email jsyeh@mail.mcu.edu.tw
+- 4.0 要先 git config --global user.name jsyeh
+- 4.1 git commit -m week05
+- 5. git push 推上雲端
+
+如果想要偽造時間, 可用 git commit -m week05 --date="2023-03-16 15:00:00" 
+這樣在 GitHub 裡看你的打卡時間, 就會用右邊的時間。
