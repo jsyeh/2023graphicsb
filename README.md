@@ -958,3 +958,343 @@ int main(int argc, char* argv[] )
 
 如果想要偽造時間, 可用 git commit -m week05 --date="2023-03-16 15:00:00" 
 這樣在 GitHub 裡看你的打卡時間, 就會用右邊的時間。
+
+
+# Week06
+
+## step01-0_介紹今天的T-R-T考試 
+
+```cpp
+glPushMatrix();
+  glTranslatef(-0.3, -0.1, 0);
+  glRotatef(-45, 0, 0, 1);
+  glTranslatef(-0.1, +0.4, 0):
+  drawHand();
+glPopMatrix();
+```
+
+
+## step01-1_開新的 GLUT 專案  Week06-1_TRT_robot2_teapot, 使用上週的 week05-2_TRT_robot 的程式 拿來改, 把 display()改畫茶壼,用glPushMatrix()和glPopMatrix()包起來, 再照考試時的T-R-T 慢慢調好, 不過還沒有把東西掛上去
+
+```cpp
+///Week06-1_TRT_robot2_teapot
+///全刪, 改用上週的 week05-2_TRT_robot 的程式來改
+#include <GL/glut.h>
+float angle = 0;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glutSolidSphere(0.01, 30, 30); ///step01-1 小球做中心點參考
+
+    glPushMatrix();
+		//(3) 這行則是要決定掛在哪裡
+        glRotatef(angle, 0, 0, 1);///(2)
+        glTranslatef(0.45, 0, 0); ///(1)
+        glutSolidTeapot( 0.3 );
+    glPopMatrix();
+
+    glutSwapBuffers();
+    angle++;
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week05");
+
+    glutDisplayFunc(display);
+    glutIdleFunc(display);
+    glutMainLoop();
+}
+```
+
+## step02-1_新開 week06-2_TRT_robot3_hierarchy 有階層的TRT, 程式和 week06-1 與 week05-2 有點像。會有很多層的 T-R-T。為簡化程式碼, 我們使用 void myCube()函式, 裡面有push pop matrix 保護裡面的 glScalef() 畫的 glutSolidCube()
+
+```cpp
+///Week06-2_TRT_robot3_hierarchy 有階層的
+///全刪, 改用上週的 week05-2_TRT_robot 的程式來改
+#include <GL/glut.h>
+float angle = 0;
+void myCube()///step02-1 函式
+{
+    glPushMatrix();
+        glScalef(1, 0.3, 0.3);
+        glutSolidCube(0.5);
+    glPopMatrix();
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glutSolidSphere(0.01, 30, 30); ///step01-1 小球做中心點參考
+
+    glPushMatrix();
+        ///glTranslatef(0.5, 0.5, 0);///(3) 這行則是要決定掛在哪裡
+        glRotatef(angle, 0, 0, 1);///(2)
+        glTranslatef(0.25, 0, 0); ///(1)
+        myCube();
+    glPopMatrix();
+
+    glutSwapBuffers();
+    angle++;
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week05");
+
+    glutDisplayFunc(display);
+    glutIdleFunc(display);
+    glutMainLoop();
+}
+```
+
+然後再把 display() 再加上兩行
+```cpp
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glutSolidSphere(0.01, 30, 30); ///step01-1 小球做中心點參考
+
+    glPushMatrix();
+        ///glTranslatef(0.5, 0.5, 0);///(3) 這行則是要決定掛在哪裡
+        glRotatef(angle, 0, 0, 1);///(2)
+        glTranslatef(0.25, 0, 0); ///(1)
+        myCube();
+    glPopMatrix();
+
+    glutSwapBuffers();
+    angle++;
+}
+```
+
+最後把 glTranslatef(0.25, 0, 0); 掛到右邊。
+
+## step02-2_接下來, 便是Hierarchy階層性轉動的效果, 把剛剛的程式碼, 像階層一樣, 上一層包下一層
+
+
+```cpp
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glutSolidSphere(0.01, 30, 30); ///step01-1 小球做中心點參考
+
+    glPushMatrix();
+        glTranslatef(0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+        glRotatef(angle, 0, 0, 1);///(2)
+        glTranslatef(0.25, 0, 0); ///(1)
+        myCube();
+        glPushMatrix();
+            glTranslatef(0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+            glRotatef(angle, 0, 0, 1);///(2)
+            glTranslatef(0.25, 0, 0); ///(1)
+            myCube();
+        glPopMatrix();
+    glPopMatrix();
+
+    glutSwapBuffers();
+    angle++;
+}
+```
+
+## step02-3_新的程式 week06-3_TRT_robot4_arm_hand_right_left 要模依右邊的上手臂、下手肘, 做出左邊的上手臂、下手肘。左邊的部分,要小心移動的正負號。
+
+要很小心排版, 才不會把 glPushMatrix() glPopMatrix() 弄錯。
+
+```cpp
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glutSolidSphere(0.01, 30, 30); ///step01-1 小球做中心點參考
+
+    glPushMatrix(); ///右邊的
+        glTranslatef(0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+        glRotatef(angle, 0, 0, 1);///(2)
+        glTranslatef(0.25, 0, 0); ///(1)
+        myCube(); ///上手臂
+        glPushMatrix();
+            glTranslatef(0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+            glRotatef(angle, 0, 0, 1);///(2)
+            glTranslatef(0.25, 0, 0); ///(1)
+            myCube(); ///下手肘
+        glPopMatrix();
+    glPopMatrix();
+
+    glPushMatrix(); ///左邊的
+        glTranslatef(-0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+        glRotatef(angle, 0, 0, 1);///(2)
+        glTranslatef(-0.25, 0, 0); ///(1)
+        myCube(); ///上手臂
+        glPushMatrix();
+            glTranslatef(-0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+            glRotatef(angle, 0, 0, 1);///(2)
+            glTranslatef(-0.25, 0, 0); ///(1)
+            myCube(); ///下手肘
+        glPopMatrix();
+    glPopMatrix();
+    glutSwapBuffers();
+    angle++;
+}
+```
+
+## step03-1_新的 week06-4_TRT_robot5_mouse_motion_angle 想要利用 mouse motion 來控制 angle角度。先把左邊的 glRotatef(angle, 0, 0, 1) 改成 -angle, 讓左邊剛好鏡射右邊。增加 void motion()函式, 再利用 glutMotionFunc(motion) 來註冊新加的 mouse motion 函式。接下來便可以利用 mouse motion 拖曳,來控制角度了。
+
+```cpp
+///week06-4_TRT_robot5_mouse_motion_angle
+///用mouse motion來控制角度
+///全刪, week06-3_TRT_robot4_arm_hand_right_left 的程式來改
+#include <GL/glut.h>
+float angle = 0;
+void myCube()///step02-1 函式
+{
+    glPushMatrix();
+        glScalef(1, 0.3, 0.3);
+        glutSolidCube(0.5);
+    glPopMatrix();
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glutSolidSphere(0.01, 30, 30); ///step01-1 小球做中心點參考
+
+    glPushMatrix(); ///右邊的
+        glTranslatef(0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+        glRotatef(angle, 0, 0, 1);///(2)
+        glTranslatef(0.25, 0, 0); ///(1)
+        myCube(); ///上手臂
+        glPushMatrix();
+            glTranslatef(0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+            glRotatef(angle, 0, 0, 1);///(2)
+            glTranslatef(0.25, 0, 0); ///(1)
+            myCube(); ///下手肘
+        glPopMatrix();
+    glPopMatrix();
+
+    glPushMatrix(); ///左邊的
+        glTranslatef(-0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+        glRotatef(-angle, 0, 0, 1);///(2)
+        glTranslatef(-0.25, 0, 0); ///(1)
+        myCube(); ///上手臂
+        glPushMatrix();
+            glTranslatef(-0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+            glRotatef(-angle, 0, 0, 1);///(2)
+            glTranslatef(-0.25, 0, 0); ///(1)
+            myCube(); ///下手肘
+        glPopMatrix();
+    glPopMatrix();
+    glutSwapBuffers();
+    ///angle++; //step03-1 把 angle++註解掉
+}
+void motion(int x, int y)
+{///step03-1 新加的 mouse motion
+    angle = x;
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week06");
+
+    glutMotionFunc(motion); ///step03-1 新加的 mouse motion
+    glutDisplayFunc(display);
+    glutIdleFunc(display);
+
+    glutMainLoop();
+}
+```
+
+## step03-1b_期中考題講解
+
+
+## step03-2_最後還有時間,老師教mouse motion來準確控制angle角度。使用的方法是 int oldX=0; 外部變數, 等一下要拿來做計算。glutMouseFunc(mouse) 要註冊 void mouse(int button, int state, int x, int y) 裡面會把 oldX = x 設定好。 glutMotionFunc(motion)要註冊 void motion(int x, int y)函式, 裡面會修改 angle += (x-oldX); 並更新 oldX = x;
+
+```cpp
+///week06-4_TRT_robot5_mouse_motion_angle
+///用mouse motion來控制角度
+///全刪, week06-3_TRT_robot4_arm_hand_right_left 的程式來改
+#include <GL/glut.h>
+float angle = 0;
+void myCube()///step02-1 函式
+{
+    glPushMatrix();
+        glScalef(1, 0.3, 0.3);
+        glutSolidCube(0.5);
+    glPopMatrix();
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glutSolidSphere(0.01, 30, 30); ///step01-1 小球做中心點參考
+
+    glPushMatrix(); ///右邊的
+        glTranslatef(0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+        glRotatef(angle, 0, 0, 1);///(2)
+        glTranslatef(0.25, 0, 0); ///(1)
+        myCube(); ///上手臂
+        glPushMatrix();
+            glTranslatef(0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+            glRotatef(angle, 0, 0, 1);///(2)
+            glTranslatef(0.25, 0, 0); ///(1)
+            myCube(); ///下手肘
+        glPopMatrix();
+    glPopMatrix();
+
+    glPushMatrix(); ///左邊的
+        glTranslatef(-0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+        glRotatef(-angle, 0, 0, 1);///(2)
+        glTranslatef(-0.25, 0, 0); ///(1)
+        myCube(); ///上手臂
+        glPushMatrix();
+            glTranslatef(-0.25, 0, 0); ///(3) 這行則是要決定掛在哪裡
+            glRotatef(-angle, 0, 0, 1);///(2)
+            glTranslatef(-0.25, 0, 0); ///(1)
+            myCube(); ///下手肘
+        glPopMatrix();
+    glPopMatrix();
+    glutSwapBuffers();
+    ///angle++; //step03-1 把 angle++註解掉
+}
+///大象放到冰箱裡, 打開冰箱門,把大象放進去,把門關起來
+///Q: 如何用mouse來轉動 物體 A: mouse按下去,mouse移動,mouse放開來
+int oldX=0;
+void mouse(int button, int state, int x, int y)
+{
+    oldX = x;
+}
+void motion(int x, int y)
+{///step03-1 新加的 mouse motion
+    angle += (x-oldX);
+    oldX = x;
+}
+int main(int argc, char* argv[] )
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week06");
+
+    glutMotionFunc(motion); ///step03-1 新加的 mouse motion
+    glutMouseFunc(mouse);   ///step03-2 新加 mouse函式
+    glutDisplayFunc(display);
+    glutIdleFunc(display);
+
+    glutMainLoop();
+}
+```
+
+## step03-3_用 Git 指令上傳今天的程式碼
+
+- 0. 安裝 Git, 開 Git Bash
+- 1. cd desktop 再 git clone https://網址 再 cd 2023graphicsb
+- 2. start . 開檔案總管,整理今天的程式
+- 3. git add . 把今天的修改加到帳冊中
+- 4.0. git config --global user.email jsyeh@mail.mcu.edu.tw
+- 4.0. git config --global user.name jsyeh
+- 4.1. git commit -m week06
+- 5. git push 推送上雲端
