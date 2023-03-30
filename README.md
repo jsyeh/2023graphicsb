@@ -1298,3 +1298,171 @@ int main(int argc, char* argv[] )
 - 4.0. git config --global user.name jsyeh
 - 4.1. git commit -m week06
 - 5. git push 推送上雲端
+
+# Week07
+
+## step01-1_請先到 jsyeh.org的3dcg10下載上課的程式 data 與 windows, 解壓縮後, 在 windows 裡有 data資料夾(內含圖檔、模型檔) 還有今天的主角 Texture.exe, 請執行它, 看一下不同的色彩, 會與貼圖互相影響。接下來理解4個頂點的逆時針繞的關係, 通常用右手座標系統(有些軟體會反過來)。試著調 glVertex3f()的座標, 了解點在哪裡。對應的貼圖的的座標也看一下。
+
+## step01-2_要試著講解貼圖的座標的意思。在改貼圖座標時, 貼圖座標介於0到1之間。但是如果超過這個範圍, 有幾種不同的作法, 如果是GL_REPEAT的話, 就會又切回 0到1之間重覆。有時候會改設成左右上下鏡射,有時候直接拿 0 或 1的值。現在這個程式範例是0到1之間重覆。 
+
+## step01-3_讀圖檔很麻煩, 在課本的範例, 用了 texture.c 配上 sgi.h sgi.c 才只能讀一個 .sgi 過時的檔名。所以今天老師要用 2行, 把所有的圖檔都讀進來。先回頭看一下期中考題, 使用老師的網站 jsyeh.org 的 gl 裡面有 OpenGL圖學期中考-模擬練習。老師示範, 讓同學練習。
+
+```cpp
+1.  glPushMatrix(); //備份矩陣
+2.    glTranslatef(x, y, z); //移動
+3.    glRotatef(angle, x, y, z); //轉動
+4.    glScalef(x, y, z); //縮放
+5.    glBegin(GL_POLYGON); //開始畫
+6.      glColor3f(r, g, b);//色彩
+7.      glNormal3f(nx, ny, nz); //打光的法向量
+8.      glTexCoord2f( tx, ty );//貼圖座標
+9.      glVertex3f(x, y, z);//頂點
+10.   glEnd(); //結束畫
+11. glPopMatrix(); //還原矩陣
+```
+
+## step02-1_第二節課才來實作圖檔的部分。使用OpenCV最簡單,但是不要用最新版,因為太大了, 而且只能在最新的Visual Studio跑。老師建議用 OpenCV 2.1 又小,又快、又跨平台, 各種compiler都能用。在你的桌面-葉正聖老師 OpenCV-2.1.0-win32-vs2008.exe 安裝時, 要勾 Add PATH (不然就完蛋了),預設裝在 C:的OpenCV2.1 不要亂動。「重開CodeBlocks」。還要設定 3個咒語。
+
+- CodeBlocks 的 Setting-Compiler 裡面的 Search directoies 及 Linker setting 要改3個地方
+- Compiler 的目錄, 要加 C:\OpenCV2.1\include
+- Linker 的目錄, 要加 C:\OpenCV2.1\lib
+- Linker setting 裡, 要加 cv210 cxcore210 highgui210 不能拼字拼錯。
+
+## step02-2_接下來要寫3行程式, 分號是 include 你 opencv的highgui.h檔案, 再宣告 IplImage 指標的 img = cvLoadImage("image.jpg"); 同時把圖檔放好, 小心副檔名。 cvShowImage("week07", img); 會在 week07 的視窗秀圖。cvWaitKey(0); 會等任意鍵繼續, 就不會閃退。
+
+```cpp
+#include <opencv/highgui.h>
+
+int main()
+{
+	IplImage * img = cvLoadImage("檔名");
+	cvShowImage("week07", img);
+	cvWaitKey(0);
+}
+```
+
+## step03-1_有了 OpenCV 的設定, 我們不只能讀圖、秀圖,還可以把圖拿來做 OpenGL 的貼圖。老師寫了一個範例在 gist.github.com/jsyeh 裡面的 myTexture, 把裡面的 sample 拿來用。新增GLUT專案 week07-2_myTexture (並先把 freeglut裝好,你會的), 再把程式換成 myTexture的版本。最後還要把圖檔放在對的工作執行目錄, 這次的 GLUT專案,會在 freeglut 的 bin 目錄裡面。把 earth.jpg 的圖檔, 放在裡面, 就可以看到囉
+
+```cpp
+///Week07-2_myTexture
+///程式碼全刪,換我們的 gist.github.com/jsyeh 裡的 myTexture
+
+#include <opencv/highgui.h> ///使用 OpenCV 2.1 比較簡單, 只要用 High GUI 即可
+#include <opencv/cv.h>
+#include <GL/glut.h>
+int myTexture(char * filename)
+{
+    IplImage * img = cvLoadImage(filename); ///OpenCV讀圖
+    cvCvtColor(img,img, CV_BGR2RGB); ///OpenCV轉色彩 (需要cv.h)
+    glEnable(GL_TEXTURE_2D); ///1. 開啟貼圖功能
+    GLuint id; ///準備一個 unsigned int 整數, 叫 貼圖ID
+    glGenTextures(1, &id); /// 產生Generate 貼圖ID
+    glBindTexture(GL_TEXTURE_2D, id); ///綁定bind 貼圖ID
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖T, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖S, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); /// 貼圖參數, 放大時的內插, 用最近點
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); /// 貼圖參數, 縮小時的內插, 用最近點
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height, 0, GL_RGB, GL_UNSIGNED_BYTE, img->imageData);
+    return id;
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit( &argc, argv );
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week09 texture");
+
+    glutDisplayFunc(display);
+    myTexture("earth.jpg");
+
+    glutMainLoop();
+}
+```
+
+## step03-2_今天第一節課的 Texture.exe 裡面有一段程式, glBegin(GL_POLYGON) glEnd() 裡面有許多 glTexCoord2f() 與 glVertex3f(), 所以我們把剛剛的 week07-2_myTexture 改寫成自己再釘上4個貼圖的釘子, 看到茶壼的後面有一個地球地圖的背景。
+
+```cpp
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBegin(GL_POLYGON);
+        glTexCoord2f(0, 0); glVertex2f(-1, +1);
+        glTexCoord2f(1, 0); glVertex2f(+1, +1);
+        glTexCoord2f(1, 1); glVertex2f(+1, -1);
+        glTexCoord2f(0, 1); glVertex2f(-1, -1);
+    glEnd();
+    glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+```
+
+## step03-3_最後一個GLUT專案 week07-3_myEarth 程式來自 gist.github.com/jsyeh 的 myEarth, 裡面稍做修改後, 便可以看到會旋轉的地球。
+
+不過如果地圖的圖檔有錯, 畫出來的地球可能會貼錯圖, 請別太在意。
+
+```cpp
+///Week07-3_myEarth 從 gist.github.com/jsyeh 的 myEarth
+///全刪,拿剛剛的程式來用!!!
+#include <opencv/highgui.h> ///使用 OpenCV 2.1 比較簡單, 只要用 High GUI 即可
+#include <opencv/cv.h>
+#include <GL/glut.h>
+GLUquadric * sphere = NULL;///一個指到二次曲面的指標
+int myTexture(char * filename)
+{
+    IplImage * img = cvLoadImage(filename); ///OpenCV讀圖
+    cvCvtColor(img,img, CV_BGR2RGB); ///OpenCV轉色彩 (需要cv.h)
+    glEnable(GL_TEXTURE_2D); ///1. 開啟貼圖功能
+    GLuint id; ///準備一個 unsigned int 整數, 叫 貼圖ID
+    glGenTextures(1, &id); /// 產生Generate 貼圖ID
+    glBindTexture(GL_TEXTURE_2D, id); ///綁定bind 貼圖ID
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖T, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖S, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); /// 貼圖參數, 放大時的內插, 用最近點
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); /// 貼圖參數, 縮小時的內插, 用最近點
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height, 0, GL_RGB, GL_UNSIGNED_BYTE, img->imageData);
+    return id;
+}
+float angle=0;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+        glRotatef(angle, 0,-1,0);
+        glRotatef(90, 1,0,0);
+        gluQuadricTexture(sphere, 1);
+        gluSphere(sphere, 1, 30, 30);///glutSolidTeapot(0.3);
+    glPopMatrix();
+    glutSwapBuffers();
+    angle++;
+}
+///Week07-3_myEarth 從 gist.github.com/jsyeh 的 myEarth
+///全刪,拿剛剛的程式來用!!!
+int main(int argc,char**argv)
+{
+    glutInit(&argc,argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week07 texture earth");
+
+    glutIdleFunc(display);
+    glutDisplayFunc(display);
+    myTexture("earth.jpg");
+    sphere = gluNewQuadric();
+    glEnable(GL_DEPTH_TEST);
+
+    glutMainLoop();
+}
+```
+## step03-4_利用Git指令,把今天的程式(1個檔案、兩個程式專案的目錄)上傳到GitHub
+- 0. 安裝 Git 再開啟 Git Bash
+- 1. cd desktop 進入桌面, git clone https://網址 再 cd 2023graphicsb
+- 2. start . 開啟檔案總管, 整理今天的程式
+- 3. git add . 加入帳冊
+- 4.0. git config --global user.email jsyeh@mail.mcu.edu.tw
+- 4.0. git config --global user.name jsyeh
+- 4.1. git commit -m week07
+- 5. git push 推送上雲端
