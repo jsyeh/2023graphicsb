@@ -1466,3 +1466,172 @@ int main(int argc,char**argv)
 - 4.0. git config --global user.name jsyeh
 - 4.1. git commit -m week07
 - 5. git push 推送上雲端
+
+# Week08
+電腦圖學 2023-04-06 Week08
+1. 主題: 3D模型
+2. 主題: OBJ檔
+3. 主題: glm.h glm.cpp
+4. 實作: Gundam 剛彈模型
+
+## step01-1_今天的目標,是3D模型,從jsyeh.org 3dcg10下載 3個檔 source(第二節要看程式碼), data(有模型檔obj,mtl), windows(執行檔), 老師帶同學看 OBJ 檔的內容,並解釋3D模型的檔案格式是怎麼來的。
+
+我們要了解3D模型,是如何產生的
+
+v 對應 vertex頂點
+vt 對應 貼圖座標 glTexCoord2f(tx,ty)
+vn 對應 vertex normal法向量
+f 對應 面facet
+
+## step01-2_自己的3D模型,匯出 OBJ檔(配上一個.mtl), 把程式偷改檔名ex. F-16.obj 把它放到課本範例 windows的data目錄裡(尤其是.obj檔的前面有對應.mtl的檔名,要正確),便可以在課本範例裡, 看到自己的模型。研究一下obj模型檔裡的內容。
+
+## step02-1_新的GLUT專案 week08-1_glm_model, 先從上上週的「白色茶壼」開始做起, 接下來 include glm.h 並把 .h 檔準備好。把 glm.c 變成 glm.cpp 加入專案中。程式部分,把指標 GLMmodel 準備好。3D模型檔案放在「工作執行目錄」(Build log 會顯示 in ...)
+
+- include 後面用 "glm.h" 表示會去同一個目錄裡面找 glm.h
+- 所以, 要把 source.zip 裡面的 glm.h 放好, 才能順利編譯compile
+- 把 glm.c 改成 glm.cpp 再把它放到剛剛的目錄中
+- 在專案裡,右鍵-Add Files,加入 glm.cpp 成功後, 左邊會有 main.cpp glm.cpp
+- 3D模型 .obj .mtl 檔案放在「工作執行目錄」 C:\Users\Administrator\Desktop\freeglut\bin
+- GLMmodel *pmodel = NULL;
+- glmReadOBJ(...)
+- glmDraw(...)
+
+```cpp
+///Week08-1_glm_model
+///把範例全刪,先把上上週的程式拿來用
+#include <GL/glut.h>
+#include "glm.h" ///step02-1 把 source.zip裡的 glm.h 放在同目錄中
+GLMmodel * pmodel = NULL; ///step02-1 模型的指標,一開始NULL空的
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+    if(pmodel==NULL){ ///第一次會進來 step02-1
+        pmodel = glmReadOBJ("Gundam.obj");///檔名照你的檔名 step02-1
+    }
+    glmDraw(pmodel, GLM_SMOOTH | GLM_MATERIAL); ///step02-1
+
+    ///glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week08");
+
+    glutDisplayFunc(display);
+    glutMainLoop();
+}
+```
+
+## step02-2_因為3D模型的大小(很可能)太大or太小, 所以需要縮放一下。可以使用 glmUnitize() 調成單位大小
+
+```cpp
+GLMmodel * pmodel = NULL; ///step02-1 模型的指標,一開始NULL空的
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+    if(pmodel==NULL){ ///第一次會進來 step02-1
+        pmodel = glmReadOBJ("Gundam.obj");///檔名照你的檔名 step02-1
+        glmUnitize(pmodel);///step02-2 縮放成Unit單位大小(-1..+1)
+    }
+    glmDraw(pmodel, GLM_SMOOTH | GLM_MATERIAL); ///step02-1
+
+    ///glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+```
+
+
+## step03-1_要把貼圖,加到 week08-2_glm_model_texture。先把剛剛的 week08-1_glm_model 的程式, 貼過來, 要修改。同時補上 glmFacetNormals() 及 glmVertexNormals()函式, 方便計算法向量。也要把剛剛的 glm.h 及 glm.cpp 準備好, 並把 glm.cpp 也加到專案中。先確認 Gundam 模型可以順利畫出來。
+- 老師會傳給你 5個檔案: Gundam.obj Gundom.mtl Diffuse.jpg AO.jpg Specular map.jpg 其中你只要用到 .obj .mtl 和 Diffuse.jpg
+- File-New-Project, GLUT專案 week08-2_glm_model_texture
+- 把剛剛的程式拿來用, 再改更好!!!!
+- 增加 glmFacetNormals() 和 glmVertexNormals()計算正確的法向量
+- 其實剛剛的Gundam.obj 裡已有 vn 法向量, 所以不執行這兩行也可以
+
+```cpp
+///Week08-2_glm_model_texture
+///把範例全刪,貼上 Week08-1_glm_model
+///再結合上週的 myTexture的(部分)程式
+///記得再裝 opencv2.1, 再配上週的3個咒語 目錄、目錄、cv210 cxcore210 highgui210
+#include <opencv/highgui.h> ///使用 OpenCV 2.1 比較簡單, 只要用 High GUI 即可
+#include <opencv/cv.h>
+#include <GL/glut.h>
+int myTexture(char * filename)
+{
+    IplImage * img = cvLoadImage(filename); ///OpenCV讀圖
+    cvCvtColor(img,img, CV_BGR2RGB); ///OpenCV轉色彩 (需要cv.h)
+    glEnable(GL_TEXTURE_2D); ///1. 開啟貼圖功能
+    GLuint id; ///準備一個 unsigned int 整數, 叫 貼圖ID
+    glGenTextures(1, &id); /// 產生Generate 貼圖ID
+    glBindTexture(GL_TEXTURE_2D, id); ///綁定bind 貼圖ID
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖T, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); /// 貼圖參數, 超過包裝的範圖S, 就重覆貼圖
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); /// 貼圖參數, 放大時的內插, 用最近點
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); /// 貼圖參數, 縮小時的內插, 用最近點
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height, 0, GL_RGB, GL_UNSIGNED_BYTE, img->imageData);
+    return id;
+}
+#include "glm.h" ///step02-1 把 source.zip裡的 glm.h 放在同目錄中
+///step03-1也要把step02-1的 glm.h也準備好
+///glm.cpp 也要加到你的程式目錄裡
+GLMmodel * pmodel = NULL; ///step02-1 模型的指標,一開始NULL空的
+float angle=0;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+    ///step03-1執行前,確認Gundam.obj Gundam.mtl 都在freeglut的bin
+    if(pmodel==NULL){ ///第一次會進來 step02-1
+        pmodel = glmReadOBJ("Gundam.obj");///檔名照你的檔名 step02-1
+        glmUnitize(pmodel);///step02-2 縮放成Unit單位大小(-1..+1)
+        glmFacetNormals(pmodel);///step03-1
+        glmVertexNormals(pmodel, 90);///step03-1
+    }
+    glPushMatrix();
+        glRotatef(angle, 0,1,0);
+        glmDraw(pmodel, GLM_SMOOTH | GLM_MATERIAL | GLM_TEXTURE); ///step02-1
+    glPopMatrix();
+
+    ///glutSolidTeapot( 0.3 );
+    angle++;
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week08");
+
+    myTexture("Diffuse.jpg");///step03-2圖檔也是放freeglut的bin
+    glEnable(GL_DEPTH_TEST);///下週再教3D的glEnable(GL_DEPTH_TEST);
+    glutDisplayFunc(display);
+    glutIdleFunc(display);
+    glutMainLoop();
+}
+```
+
+## step03-2_要繼續把貼圖完成。也就是上週的貼圖做的事,全部做一次
+- 安裝 OpenCV, 要記得 Add PATH
+- 重開CodeBlocks
+- 貼上 myTexture的函式(18行)
+- 在 main() 加入 myTexture("Diffuse.jpg"); 圖檔也要放在 freeglut的bin
+- 加上 Settings-Compiler咒語: C:\OpenCV2.1\include
+- 加上 Settings-Compiler咒語: C:\OpenCV2.1\lib
+- 加上 Settings-Compiler咒語: cv210 cxcore210 highgui210
+- 最後 glmDraw(pmodel, GLM_SMOOTH | GLM_MATERIAL | GLM_TEXTURE); 增加貼圖功能
+
+因為 OpenCV讀圖檔時,是倒過來的, 所以可以在小畫家,把圖檔倒過來,就會正確
+
+## step03-3_上傳 GitHub
+- 0. 安裝Git 開啟 Git Bash
+- 1. cd desktop 進入桌面 git clone https://網址 再 cd 2023graphicsb
+- 2. start . 開檔案總管,把今天的2個程式加進去
+- 3. git add . 加入帳冊
+- 4.0. git config --global user.email jsyeh@mail.mcu.edu.tw
+- 4.0. git config --global user.name jsyeh
+- 4.1. git commit -m week08
+- 5. git push
