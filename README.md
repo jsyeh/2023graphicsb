@@ -1635,3 +1635,45 @@ int main(int argc, char**argv)
 - 4.0. git config --global user.name jsyeh
 - 4.1. git commit -m week08
 - 5. git push
+
+# Week09
+期中考週
+
+# Week10
+
+
+## step01-0_期中考試
+
+## step01-1_上次week08上課時,有讓大家實作 week08-2_glm_model可以開3D模型。利用Git指令,把GitHub的備份取下來。
+
+Git Bash
+- cd desktop
+- git clone https://github.com/jsyeh/2023graphicsb
+
+可以利用CodeBlocks 開啟桌面的2023graphicsb的 week08-2_glm_model 目錄裡的 week08-2_glm_model.cbp 專案檔
+
+
+接下來, 要安裝 GLUT 及 OpenCV 才會有對應的 lib 檔
+
+1. freeglut 解壓縮到桌面, 把 lib的 libfreeglut.a 複製成 libglut32.a
+2. 安裝 OpenCV 2.1 預設目錄, 且 Add PATH 要勾!
+3. 重開 CodeBlocks, 把咒語設好: Setting-Compiler裡
+- Search Directories - Compiler 加 C:\OpenCV2.1\include
+- Search Directories - Linker 加 C:\OpenCV2.1\lib
+- Linker Setting 加: cv210 cxcore210 highgui210
+
+先把上面的裝好, 我們再開新GLUT專案 week10-1_glm_gundam 吧!
+
+程式碼分成 3大段
+- 10行 GLUT 最簡單的程式 (include, display(), main())
+- 18行 myTexture 貼圖的程式 
+- 上週的重點 glm
+	1. glm.h glm.cpp (從課本範例 jsyeh.org/3dcg10 source.zip) 複製好
+	2. 把 glm.cpp 加到專案裡
+	3. 程式要修改 #include "glm.h" 還有指標 `GLMmodel * pmodel = NULL;`
+	4. 還有 display()裡面的 if(pmodel==NULL) 要去讀檔
+	5. glmDraw(pmodel, GLM_SMOOTH | GLM_MATERIAL | GLM_TEXTURE);
+- 把 Gundam.obj Gundam.mtl Diffuse.jpg 都放到 工作執行目錄
+
+
+## step03-1_如何切割3D模型,可以使用 Maya把模型讀入後,刪除不要的, 再匯出。便能得到我們要的身體的各個部位。之後期末作品,便可以照著TRT來做出來。
