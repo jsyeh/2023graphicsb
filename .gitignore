@@ -14,7 +14,9 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
-*.dll
+
+# *.dll 這行的前面加上註解, 再存檔。
+# 之後Git備份時,就會把 freeglut.dll 也備份起來
 
 # Fortran module files
 *.mod
