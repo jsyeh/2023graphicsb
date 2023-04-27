@@ -1677,3 +1677,191 @@ Git Bash
 
 
 ## step03-1_如何切割3D模型,可以使用 Maya把模型讀入後,刪除不要的, 再匯出。便能得到我們要的身體的各個部位。之後期末作品,便可以照著TRT來做出來。
+
+# Week11
+
+## step01-1_新開GLUT專案 week11-1_keyboard 一開始的範例裡面, 就已經有 keyboard 對應的鍵盤, 像是 + - 和 Esc 鍵的操作。所以我們就仿效它, 直接寫 if(key==27) exit(0); 離開。 27 是 ESC 這個特殊鍵
+
+Ctrl-F 在程式碼裡找 keyboard
+
+找到
+glutKeyboardFunc(keyboard)
+
+```cpp
+#include <GL/glut.h>
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+void keyboard(unsigned char key, int x, int y)
+{///step01-1
+    if( key == 27 ) exit(1234); ///step01-1
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week11");
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard); ///step01-1
+
+    glutMainLoop();
+}
+```
+
+## step01-2_再結合keyboard和播放音樂, 新增GLUT專案  week11-2_keyboard_PlaySound, 首先前面要 include windows.h 才能有這個功能。對應的函式是 PlaySound() 裡面的檔名先用「絕對路徑」, 也就是從C磁碟開始的很長的檔名, 同時因為反斜線是特殊符號, 所以要兩個反斜線,來把目錄標示好。 NULL 是空指標, 表示這個參數不用。SND_ASYNC 是聲音 「不等待、不同步」,也就是直接播的意思。 
+
+wav: 檔案大，沒壓縮,容易播放
+mp3: 檔案小、有壓縮,麻煩一點
+
+最前面要 #include <windows.h>
+
+PlaySound("檔名.wav", ...);
+
+SND_ASYNC 是「不等待、不同步」
+SND_SYNC 是「要等待、同步」
+
+```cpp
+///Week11-2_keyboard_PlaySound 拿 Week11-1_keyboard 程式來用
+#include <windows.h> ///step01-2 要放在第1行
+#include <GL/glut.h>
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+void keyboard(unsigned char key, int x, int y)
+{///step01-1
+    if(key=='1') PlaySound("C:\\Users\\Administrator\\Desktop\\do-re-mi\\do.wav", NULL, SND_ASYNC);
+    if(key=='2') PlaySound("C:\\Users\\Administrator\\Desktop\\do-re-mi\\re.wav", NULL, SND_ASYNC);
+    if(key=='3') PlaySound("C:\\Users\\Administrator\\Desktop\\do-re-mi\\mi.wav", NULL, SND_ASYNC);
+}///step01-2
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week11");
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard); ///step01-1
+
+    glutMainLoop();
+}
+```
+
+
+## step02-1_現在想要練習 PlaySound 在大一教的 Hello World 範例裡。File-New-Empty空白檔案,存 week11-3_PlaySound.cpp 使用方法, 一樣簡單的使用 PlaySound()函式, 同時在第1行要有 windows.h 最後的咒語 winmm 要加好
+
+```cpp
+#include <windows.h> ///step02-1
+#include <stdio.h>
+int main()
+{ ///Setting-Compiler, Linker咒語: 需要 winmm 
+    PlaySound("C:\\Users\\Administrator\\Desktop\\do-re-mi\\do.wav", NULL, SND_SYNC);
+    PlaySound("C:\\Users\\Administrator\\Desktop\\do-re-mi\\re.wav", NULL, SND_SYNC);
+    PlaySound("C:\\Users\\Administrator\\Desktop\\do-re-mi\\mi.wav", NULL, SND_SYNC);
+    printf("Hello World\n");
+}
+
+```
+
+## step02-1b_解釋「絕對路徑、相對路徑」的差別。絕對路徑比較長,但可能每台電腦都不一樣。相對路徑 要看從哪裡開始。
+
+```cpp
+///Week11-3_PlaySound.cpp
+#include <windows.h> ///step02-1
+#include <stdio.h>
+int main()
+{ ///Setting-Compiler, Linker咒語: 需要 winmm
+    ///絕對路徑 Absolute Path
+    ///PlaySound("C:\\Users\\Administrator\\Desktop\\do-re-mi\\do.wav", NULL, SND_SYNC);
+    ///PlaySound("C:\\Users\\Administrator\\Desktop\\do-re-mi\\re.wav", NULL, SND_SYNC);
+    ///PlaySound("C:\\Users\\Administrator\\Desktop\\do-re-mi\\mi.wav", NULL, SND_SYNC);
+
+    ///目錄的斜線可以用 兩個反斜線 \\ 或著是一個斜線 /
+    PlaySound("do-re-mi/do.wav", NULL, SND_SYNC);
+    ///相對路徑 Relative Path
+
+    printf("Hello World\n");
+}
+```
+
+
+## step02-2_想要播放MP3檔,MP3從網路下載(ex. youtube mp3 download), 新的GLUT專案 week11-4_CMP3_MCI_Load_Play 。裡面先 include "CMP3_MCI.h" 這個外掛, 便能簡單播放MP3檔。步驟是先宣告物件變數 CMP3_MCI myMP3; 接下來 myMP3.Load("檔名.mp3")把檔案讀進來, 再 myMP3.Play()播放, 就可以了。小心路徑問題。看是要絕對路徑or相對路徑。
+
+```cpp
+/* Program entry point */
+
+#include "CMP3_MCI.h" ///step02-2 使用外掛 用雙引號,表示是同一目錄裡的.h檔
+
+///CMP3_MCI.h 放在 week11-4_CMP3_MCI_Load_Play 程式同一目錄
+
+CMP3_MCI myMP3; ///step02-2 宣告物件變數
+
+
+
+int main(int argc, char *argv[])
+
+{
+
+    char filename[] = "C:/Users/Administrator/Desktop/do-re-mi/suzume.mp3";
+
+    myMP3.Load(filename); ///step02-2
+
+    myMP3.Play();///step02-2
+
+```
+
+
+## step03-1_想要解決歷史餘毒,也就是 working_dir 工作執行目錄, 不要在(很長很長的) freeglut的bin裡面。所以, 把 freeglut的bin裡面的 freeglut.dll 複製到 專案 的同一目錄裡, 再把聲音檔 suzume.mp3 也放在同一目錄裡。最後, 把 Project-Properties 裡面的 Build targets 的 工作執行目錄 working dir 改成小數點 . 代表同一目錄。
+
+```cpp
+#include "CMP3_MCI.h" ///step02-2 使用外掛 用雙引號,表示是同一目錄裡的.h檔
+
+///CMP3_MCI.h 放在 week11-4_CMP3_MCI_Load_Play 程式同一目錄
+
+CMP3_MCI myMP3; ///step02-2 宣告物件變數
+
+
+
+int main(int argc, char *argv[])
+
+{
+
+    ///char filename[] = "C:/Users/Administrator/Desktop/do-re-mi/suzume.mp3";
+
+    ///myMP3.Load(filename); ///step02-2
+
+    myMP3.Load("suzume.mp3"); ///step03-1
+
+    myMP3.Play();///step02-2
+
+```
+
+
+## step03-2_現在的專案目錄裡, 有 mp3 及 .dll檔, 可是 Git 無法上傳, 因為 .gitignore 會把 .dll 檔忽略。但是如果沒有備份它, 則下載的程式就不能執行, 會出現.dll找不到的錯誤。所以, 現在要把 .gitignore改一下。之後在Git備份時,就會連那個 freeglut.dll 一起備份
+
+git clone https://github.com/jsyeh/2023graphicsb
+
+會把你的倉庫下載複製下來。
+
+你要把裡面的 .gitignore 用 Notepad++ 開起來
+把 
+
+```
+# *.dll 這行的前面加上註解
+```
+
+- git status 會看到紅色的地方,多一個 modify 的 .gitignore
+- git add .
+- git status 看到全部的修改變綠色
+
+最後
+- git config --global user.email jsyeh@mail.mcu.edu.tw
+- git config --global user.name jsyeh
+- git commit -m week11
+- git push
