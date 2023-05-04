@@ -1865,3 +1865,229 @@ git clone https://github.com/jsyeh/2023graphicsb
 - git config --global user.name jsyeh
 - git commit -m week11
 - git push
+
+# Week12
+
+## step01-1_新的空白檔案 week12-1_printf_fprintf.cpp 要練習寫檔案。和 printf()很像, fprintf()的前面, 要有一個 f 也就是檔案指標。檔案指標 fout = fopen("檔名", "w") 就會寫檔出去。
+
+```cpp
+///Week12-1_printf_fprintf.cpp
+///要開檔案指標  fopen()
+#include <stdio.h>
+int main()
+{///檔案指標 fout = fopen("檔名", "模式"); 要開檔
+    FILE * fout = fopen("file.txt", "w");///w:write
+    printf("Hello World\n");
+    fprintf(fout, "Hello World在檔案裡\n");
+}
+
+```
+
+## step01-2_新的空白檔案 week12-2_fscanf.cpp 要把檔案讀進來, 檔案指標 fin = fopen("檔名", "r") 之後 fscanf()便能把 fin 當前面的參數來讀檔。前一個程式 fprintf()印出字串, 這裡就宣告字串 char line[20]; 再用 %s 讀進來。因為空格斷開, 所以分2次讀入。
+
+```cpp
+///Week12-2_scanf.cpp
+#include <stdio.h>
+int main()
+{
+    char line[20];
+    ///scanf("%s", line);
+    FILE * fin = fopen("file.txt", "r");///r:read讀
+    fscanf(fin, "%s", line);
+    printf("讀到了:%s\n", line);///馬上印
+    fscanf(fin, "%s", line);
+    printf("讀到了:%s\n", line);///馬上印
+}
+```
+
+## step01-3_接下來就辛苦了, 我們想要在同一個程式中, 又有寫檔案、又有讀檔案。新的空白檔案 week12-3_fopen_fclose_fprintf_fscanf.cpp 在這個範例裡, 我們想寫的是一堆數字、想讀的也是一堆數字(因為期末作品,要做出動畫的動作時, 有很多關節的角度要存起來, 之後再播放)。因為是同一個檔案, 明顯會出問題, 一定要記得 fopen() 結束時要fclose()。
+
+```cpp
+///week12-3_fopen_fclose_fprintf_fscanf.cpp
+#include <stdio.h>
+int main()
+{
+    int a[10] = {10,20,30,40,50,60,70,80,90,100};
+    FILE * fout = fopen("file3.txt", "w");
+    for(int i=0; i<10; i++){
+        fprintf(fout, "%d ", a[i] ); ///寫到檔案去,同時
+        printf("%d ", a[i] ); ///順便印出來,讓你看看
+    }
+    fclose(fout);
+
+    int b[10];
+    FILE * fin = fopen("file3.txt", "r");
+    for(int i=0; i<10; i++){
+        fscanf(fin, "%d", &b[i] ); ///讀到陣列 b[i]裡
+        printf("%d ", b[i] );
+    }
+    fclose(fin);
+}
+```
+
+## step02-0_介紹buffer_overflow相關的議題,小心指標容易出錯
+
+
+## step02-1_新的GLUT專案 week12-4_keyboard_mouse 想要用 mouse 來控制 teapot 的位置, 使用 teapotX 和 teapotY 變數, 再 glTranslatef(teapotX, teapotY, 0) 來移動茶壼。
+
+```cpp
+///Week12-4_keyboard_mouse 要能用 mouse來移動, 同時要解決存讀檔的問題
+#include <stdio.h> ///要檔案的Input/Output
+#include <GL/glut.h>
+float teapotX = 0, teapotY = 0;
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+        glTranslatef(teapotX, teapotY, 0);
+        glutSolidTeapot( 0.3 );
+    glPopMatrix();
+    glutSwapBuffers();
+}
+void mouse(int button, int state, int x, int y)
+{
+    teapotX = (x-150)/150.0;
+    teapotY = (150-y)/150.0;
+    display();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week12");
+
+    glutDisplayFunc(display);
+    glutMouseFunc(mouse); ///step02-1
+
+    glutMainLoop();
+}
+```
+
+## step02-2_剛剛的 week12_keyboard_mouse專案裡, 還沒有加 檔案的部分, 我們將在 mouse()裡的 GLUT_DOWN 按下mouse時寫檔, 再用 keyboard() 來觸發讀檔的動作。
+
+```cpp
+///Week12-4_keyboard_mouse 要能用 mouse來移動, 同時要解決存讀檔的問題
+#include <stdio.h> ///要檔案的Input/Output
+#include <GL/glut.h>
+float teapotX = 0, teapotY = 0;
+FILE * fout = NULL;///step02-1
+FILE * fin = NULL;///step02-2
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+        glTranslatef(teapotX, teapotY, 0);
+        glutSolidTeapot( 0.3 );
+    glPopMatrix();
+    glutSwapBuffers();
+}
+void mouse(int button, int state, int x, int y)
+{
+    teapotX = (x-150)/150.0;
+    teapotY = (150-y)/150.0;
+    if(state==GLUT_DOWN){ ///如果mouse按下去
+        if(fout==NULL) fout = fopen("file4.txt", "w");
+
+        fprintf(fout, "%f %f\n", teapotX, teapotY);
+    }
+    display();
+}
+void keyboard(unsigned char key, int x, int y)///step02-2
+{
+    if(fin==NULL){
+        fclose(fout);///step02-2
+        fin = fopen("file4.txt", "r");///step02-2
+    }
+    fscanf(fin, "%f%f", &teapotX, &teapotY);///step02-2
+    display();///step02-2
+}///step02-2
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week12");
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard); ///step02-2
+    glutMouseFunc(mouse); ///step02-1
+
+    glutMainLoop();
+}
+```
+
+## step03-1_再來調整工作執行目錄 CodeBlocks 的 Project-Properties 裡可改
+
+```cpp
+///Week12-4_keyboard_mouse 要能用 mouse來移動, 同時要解決存讀檔的問題
+#include <stdio.h> ///要檔案的Input/Output
+#include <GL/glut.h>
+///step03-1
+///CodeBlocks的專案設定 Project-Properties裡第二個Build Target
+/// Executing working dir 工作執行目錄
+///原本是 C:\Users\Administrator\Desktop\freeglut\bin
+///改成 . (小數點) 再 File-Save Everything 便能將專案檔設好、存檔。
+///之後你的工作執行目錄, 就在你的程式專案的那一目錄裡
+///但執行時, 就會少了 freeglut.dll 檔, 你再手動copy到你的專案檔裡。
+///  註: 你可以看到 .cbp CodeBlocks Project 專案裡 working_dir 有變動哦
+float teapotX = 0, teapotY = 0;
+FILE * fout = NULL;///step02-1
+FILE * fin = NULL;///step02-2
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+        glTranslatef(teapotX, teapotY, 0);
+        glutSolidTeapot( 0.3 );
+    glPopMatrix();
+    glutSwapBuffers();
+}
+void mouse(int button, int state, int x, int y)
+{
+    teapotX = (x-150)/150.0;
+    teapotY = (150-y)/150.0;
+    if(state==GLUT_DOWN){ ///如果mouse按下去
+        if(fout==NULL) fout = fopen("file4.txt", "w");
+
+        fprintf(fout, "%f %f\n", teapotX, teapotY);
+    }
+    display();
+}
+void keyboard(unsigned char key, int x, int y)///step02-2
+{
+    if(fin==NULL){
+        fclose(fout);///step02-2
+        fin = fopen("file4.txt", "r");///step02-2
+    }
+    fscanf(fin, "%f%f", &teapotX, &teapotY);///step02-2
+    display();///step02-2
+}///step02-2
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week12");
+
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard); ///step02-2
+    glutMouseFunc(mouse); ///step02-1
+
+    glutMainLoop();
+}
+```
+
+
+## step03-2_想在同一個目錄裡, 寫期末作品Final_Project 
+- 所以,把CodeBlocks關掉(確認檔案都有存好),
+- 整個 week12-4_keyboard_mouse目錄,都copy 目錄改成 Final_Project,
+- 把專案檔 week12-4_keyboard_mouse.cbp 改成 Final_Project.cbp。
+- 再把 Project-Properties裡的title改成 Final_Project, 
+- Save Everything。
+- 之後雲端這份, 到處都能用。只用這個來寫期末作品。
+
+## step03-3_用Git上傳GitHub
+
+- git add .
+- git config --global user.email jsyeh@mail.mcu.edu.tw
+- git config --global user.name jsyeh
+- git commit -m week12
+- git push
