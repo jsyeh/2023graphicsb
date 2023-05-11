@@ -2091,3 +2091,39 @@ int main(int argc, char** argv)
 - git config --global user.name jsyeh
 - git commit -m week12
 - git push
+
+
+# Week13
+
+## step01-1_要承接上週的程式, 所以要先安裝Git, 再 git clone 把整個倉庫拿下來, 其中 Final_Project 裡面的 Final_Project.cbp 專案檔,用CodeBlocks 開起來。以後不要再裝 freeglut了, 因為我們要用相對路徑, 這樣家裡、學校,都可以順利compile程式。Project-Properties的右下角的設定,把 compiler 及 linker 的目錄設成相對路徑, 把 freeglut放在我們的目錄裡,並把libglut32.a準備好,便能順利編譯了。File-Save Everything
+
+## step01-2_想要馬上用Git備份上傳。先把 .gitignore 放行 .a .lib .dll 都註解掉,就可以放行了。存檔。CodeBlocks也要 Save Everything
+
+- cd desktop
+- git clone https://github.com/jsyeh/2023graphicsb
+- cd 2023graphicsb
+- start .
+
+以上是前一步做的。後來做的,加到要上傳的帳冊
+- git status (紅色)
+- git add .  (加到帳冊)
+- git status (綠色)
+
+帳冊要確認 (確認前, 要設定好你的email及名字)
+- git config --global user.email jsyeh@mail.mcu.edu.tw
+- git config --global user.name jsyeh
+- git commit -m week13
+- git push 
+以上就可以推送上雲端
+
+## step02-1_利用 Maya 把上課範例的 Al.obj 裁切成 head.obj body.obj uparmR.obj lowarmR.obj ... 等一下要放到你的 Final_Project 裡面
+
+
+## step02-2_把week08的 glm.h glm.cpp 複製到 Final_Project裡, 加到專案, #include "glm.h" 並 Add Files 把 glm.cpp 加好, 再準備好 GLMmodel 指標 head = NULL; 要讀檔用。利用 glmReadOBJ() 把 model 目錄裡的 head.obj 讀好, glmUnitize()之後會刪掉。 glmDraw()便可以讀入模型
+
+## step02-3_要再把更多的模型讀入時, 發現「大小」是個問題。不能每個都用 glmUnitize() 調到-1...+1間。而應該是整體用 glScalef()縮放到適當的大小, 可以用 Maya 查看模型整體的大小, 以便設定對的縮放比例,讓畫面容易處理。
+
+## step03-1_想要用鍵盤來切換不同的模型要不要秀出來, 就宣告 int show[4] = {1, 0, 0, 0}; 一開始只秀 頭。自己寫 keyboard()函式, if(key=='1') show[1] = ! show[1]; 意思是把 0 變 1 或 1 變 0。 display()裡, 加入 if(show[0]) glmDraw(head, GLM_MATERIAL); 用陣列來決定誰要秀出來。
+
+## step03-2_利用 motion 來移動物體
+
