@@ -49,8 +49,8 @@ void mouse(int button, int state, int x, int y) {
     }
 }
 void motion(int x, int y) { ///week13_step03-2
-    teapotX += (x - oldX)/150.0;
-    teapotY -= (y - oldY)/150.0;
+    teapotX += (x - oldX)/150.0*3;
+    teapotY -= (y - oldY)/150.0*3;
     oldX = x;
     oldY = y;
     glutPostRedisplay();
