@@ -2127,3 +2127,436 @@ int main(int argc, char** argv)
 
 ## step03-2_利用 motion 來移動物體
 
+```cpp
+///Final_Project 之後都用同一個程式,來進行 Final Project
+#include <stdio.h> ///要檔案的Input/Output
+#include <GL/glut.h>
+#include "glm.h" ///week13_step02-2
+///week13_step02-2 再把 glm.cpp 在左邊 Add files 加進去
+GLMmodel * head = NULL;///week13_step02-2
+GLMmodel * body = NULL;///week13_step02-2
+GLMmodel * uparmR = NULL;
+GLMmodel * lowarmR = NULL;
+int show[4] = {1,0,0,0}; ///week13_step03-1
+float teapotX = 0, teapotY = 0;
+FILE * fout = NULL;///step02-1
+FILE * fin = NULL;///step02-2
+void keyboard(unsigned char key, int x, int y) {///week13_step03-1
+    if(key=='0') show[0] = ! show[0];///week13_step03-1
+    if(key=='1') show[1] = ! show[1];///week13_step03-1
+    if(key=='2') show[2] = ! show[2];///week13_step03-1
+    if(key=='3') show[3] = ! show[3];///week13_step03-1
+    glutPostRedisplay();///week13_step03-1
+}///week13_step03-1
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    if(head==NULL){///week13_step02-2
+        head = glmReadOBJ("model/head.obj");///week13_step02-2
+        body = glmReadOBJ("model/body.obj");
+        uparmR = glmReadOBJ("model/uparmR.obj");
+        lowarmR = glmReadOBJ("model/lowarmR.obj");
+        ///glmUnitize(head); ///week13_step02-2 之後會改
+    }///week13_step02-2
+    glPushMatrix();
+        glScalef(0.3, 0.3, 0.3);///week13_step02-3
+        glPushMatrix();///week13_step03-2
+            glTranslatef(teapotX, teapotY, 0); ///week13_step03-2
+            if(show[0]) glmDraw(head, GLM_MATERIAL);///week13_step02-3
+        glPopMatrix();///week13_step03-2
+        if(show[1]) glmDraw(body, GLM_MATERIAL);///week13_step02-2
+        if(show[2]) glmDraw(uparmR, GLM_MATERIAL);///week13_step02-3
+        if(show[3]) glmDraw(lowarmR, GLM_MATERIAL);///week13_step02-3
+        ///week13_step03-1 加上 if(show[??]) ...
+    glPopMatrix();
+    glutSwapBuffers();
+}
+int oldX=0, oldY=0; ///week13_step03-2
+void mouse(int button, int state, int x, int y) {
+    if(state==GLUT_DOWN){
+        oldX = x;
+        oldY = y;
+    }
+}
+void motion(int x, int y) { ///week13_step03-2
+    teapotX += (x - oldX)/150.0*3;
+    teapotY -= (y - oldY)/150.0*3;
+    oldX = x;
+    oldY = y;
+    glutPostRedisplay();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week12");
+
+    glutMotionFunc(motion); ///week13_step03-2
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
+
+    glutMainLoop();
+}
+```
+
+# Week14
+
+電腦圖學 2023-05-18 Week14
+1. 主題: 切換關節
+2. 主題: 切換移動、旋轉
+3. 整合打光、貼圖
+4. 主題: 計時器、內插動作
+
+## step01-1_先把程式Git複製下來,在裡面開GLUT專案 week14-1_timer 先有10行GLUT程式, 再加3行 timer, 讓它轉。使用 float angle=0; 一開始是0度, 之後每次+90度, 然後重畫畫面。起床時, 先設定「下一次起床」的鬧鐘時間, 就能每次起床轉動90度, 完成動畫了。
+
+1. 安裝Git,開Git Bash
+	- cd desktop 到桌面
+	- git clone https://github.com/你的網址/2023graphicsb
+	- cd 2023graphicsb 
+	- start .    開檔案總管
+2. 在你的專案裡, 開新的GLUT專案 week14-1_timer 專案
+	- (可不用了)我們先把桌面的 freeglut 設好
+	- 新專案,開在桌面的 2023graphicsb 裡
+	- freeglut 用 2023graphicsb 的 Final_Project 的 freeglut
+
+```cpp
+///Week14-1_timer
+#include <GL/glut.h>
+float angle = 0; ///step01-1
+void timer(int t) ///step01-1
+{
+    glutTimerFunc(500, timer, t+1); ///step01-1
+    angle += 90; ///角度+90度
+    glutPostRedisplay(); ///step01-1 重畫畫面
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix(); ///step01-1
+        glRotatef(angle, 0, 0, 1); ///step01-1
+        glutSolidTeapot( 0.3 );
+    glPopMatrix(); ///step01-1
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week14");
+
+    glutTimerFunc(3000, timer, 0); ///step01-1
+    glutDisplayFunc(display);
+
+    glutMainLoop();
+}
+```
+
+## step01-2_按鍵後,再開始Play播放動畫, week14-2_timer_play。把 glutTimerFunc()改在 keyboard()裡面啟動, 後面就源源不絕的一直被叫起床。glutTimerFunc(等多久, timer, t+1); 裡面等待的時間,單位是 ms (千分之一秒), 把等待時間變成 33 ms, 再把 angle += 3; 每次轉少一點, 就會變很順。
+
+
+```cpp
+///Week14-2_timer_play
+#include <GL/glut.h>
+float angle = 0; ///step01-1
+void timer(int t) ///step01-1
+{
+    glutTimerFunc(33, timer, t+1); ///step01-1
+    angle += 3; ///角度+90度
+    glutPostRedisplay(); ///step01-1 重畫畫面
+}
+void keyboard(unsigned char key, int x, int y)  ///step01-2
+{
+     glutTimerFunc(0, timer, 0); ///step01-2
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix(); ///step01-1
+        glRotatef(angle, 0, 0, 1); ///step01-1
+        glutSolidTeapot( 0.3 );
+    glPopMatrix(); ///step01-1
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week14");
+
+    glutKeyboardFunc(keyboard); ///step01-2
+    ///glutTimerFunc(3000, timer, 0); ///step01-1
+    glutDisplayFunc(display);
+
+    glutMainLoop();
+}
+```
+
+## step02-1_關於動作內插,可以很順的把中間的值都變出來。使用的公式, 是有個 alpha值, 介於 0.0~1.0 之間。使用公式 (alpha)乘(新的) + (1-alpha)乘(舊的), 便能把中間的值都推算出來。使用Excel來講解示範。
+
+
+把現在的程式先 Git 備份起來
+- git config --global user.email jsyeh@mail.mcu.edu.tw
+- git config --global user.name jsyeh
+
+前2行設定, 後3行會備份到雲端
+- git add .
+- git commit -m week14
+- git push
+
+## step02-2_把 alpha內插,用程式寫出來。week14-3_timer_alpha_interpolation 專案, 裡面利用 mouse 來點擊你的開始、結束的位置, 然後再play
+
+```cpp
+///Week14-3_timer_alpha_interpolate
+#include <GL/glut.h>
+float angle = 0, newAngle = 0, oldAngle = 0; ///step02-2 宣告 新角度、舊角度
+float oldX = 0;  ///step02-2 舊的x座標
+void timer(int t) ///step01-1
+{
+    if(t<100) glutTimerFunc(33, timer, t+1); ///step01-1
+    float alpha = t/100.0;  ///step02-2 所以 alpha介 0.0~1.0 之間
+    angle = alpha*newAngle + (1-alpha)*oldAngle; ///step02-2
+    glutPostRedisplay(); ///step01-1 重畫畫面
+}
+void keyboard(unsigned char key, int x, int y)  ///step01-2
+{
+     glutTimerFunc(0, timer, 0); ///step01-2
+}
+void mouse(int button, int state, int x, int y) {  ///step02-2
+    if(state==GLUT_DOWN) oldAngle = angle;  ///step02-2
+    if(state==GLUT_UP) newAngle = angle;  ///step02-2
+    oldX = x;  ///step02-2
+    glutPostRedisplay();  ///step02-2
+}
+void motion(int x, int y) {  ///step02-2
+    angle += x-oldX;  ///step02-2
+    oldX = x;  ///step02-2
+    glutPostRedisplay();  ///step02-2 更新畫面
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glPushMatrix(); ///step01-1
+        glRotatef(angle, 0, 0, 1); ///step01-1
+        glutSolidTeapot( 0.3 );
+    glPopMatrix(); ///step01-1
+    glutSwapBuffers();
+}
+int main(int argc, char**argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week14");
+
+    glutMouseFunc(mouse); ///step02-2
+    glutMotionFunc(motion); ///step02-2
+    glutKeyboardFunc(keyboard); ///step01-2
+    ///glutTimerFunc(3000, timer, 0); ///step01-1
+    glutDisplayFunc(display);
+
+    glutMainLoop();
+}
+```
+
+## step03-1_請檢查上週的 Final_Project 專案裡,有沒有2個檔案 (沒有的話,就是上週雲端備分失敗)。程式碼裡, 準備好關節的 int ID = 2; 表示決定要把哪一個關節變紅色。display()裡,就照著if(ID==2) glColor3f(1,0,0); else glColor3f(1,1,1); 來著色。 int show[4] = {1,1,1,1}; 表示4個關節都要畫出來。
+
+
+```cpp
+///Final_Project 之後都用同一個程式,來進行 Final Project
+#include <stdio.h> ///要檔案的Input/Output
+#include <GL/glut.h>
+#include "glm.h" ///week13_step02-2
+///week13_step02-2 再把 glm.cpp 在左邊 Add files 加進去
+GLMmodel * head = NULL;///week13_step02-2
+GLMmodel * body = NULL;///week13_step02-2
+GLMmodel * uparmR = NULL;
+GLMmodel * lowarmR = NULL;
+int show[4] = {1,1,1,1}; ///week14_step03_1 都秀出來 ///week13_step03-1
+int ID = 2; ///week14_step03_1 設定關節 ID
+float teapotX = 0, teapotY = 0;
+FILE * fout = NULL;///step02-1
+FILE * fin = NULL;///step02-2
+void keyboard(unsigned char key, int x, int y) {///week13_step03-1
+    if(key=='0') ID = 0; ///week14_step03_1 ///show[0] = ! show[0];///week13_step03-1
+    if(key=='1') ID = 1; ///week14_step03_1 ///show[1] = ! show[1];///week13_step03-1
+    if(key=='2') ID = 2; ///week14_step03_1 ///show[2] = ! show[2];///week13_step03-1
+    if(key=='3') ID = 3; ///week14_step03_1 ///show[3] = ! show[3];///week13_step03-1
+    glutPostRedisplay();///week13_step03-1
+}///week13_step03-1
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    if(head==NULL){///week13_step02-2
+        head = glmReadOBJ("model/head.obj");///week13_step02-2
+        body = glmReadOBJ("model/body.obj");
+        uparmR = glmReadOBJ("model/uparmR.obj");
+        lowarmR = glmReadOBJ("model/lowarmR.obj");
+        ///glmUnitize(head); ///week13_step02-2 之後會改
+    }///week13_step02-2
+    glPushMatrix();
+        glScalef(0.3, 0.3, 0.3);///week13_step02-3
+        glPushMatrix();///week13_step03-2
+            glTranslatef(teapotX, teapotY, 0); ///week13_step03-2
+
+            if(ID==0) glColor3f(1,0,0);///week14_step03_1 秀紅色
+            else glColor3f(1,1,1);///week14_step03_1 秀白色
+            if(show[0]) glmDraw(head, GLM_MATERIAL);///week13_step02-3
+        glPopMatrix();///week13_step03-2
+
+        if(ID==1) glColor3f(1,0,0);///week14_step03_1 秀紅色
+        else glColor3f(1,1,1);///week14_step03_1 秀白色
+        if(show[1]) glmDraw(body, GLM_MATERIAL);///week13_step02-2
+
+        if(ID==2) glColor3f(1,0,0);///week14_step03_1 秀紅色
+        else glColor3f(1,1,1);///week14_step03_1 秀白色
+        if(show[2]) glmDraw(uparmR, GLM_MATERIAL);///week13_step02-3
+
+        if(ID==3) glColor3f(1,0,0);///week14_step03_1 秀紅色
+        else glColor3f(1,1,1);///week14_step03_1 秀白色
+        if(show[3]) glmDraw(lowarmR, GLM_MATERIAL);///week13_step02-3
+        ///week13_step03-1 加上 if(show[??]) ...
+    glPopMatrix();
+    glutSwapBuffers();
+}
+int oldX=0, oldY=0; ///week13_step03-2
+void mouse(int button, int state, int x, int y) {
+    if(state==GLUT_DOWN){
+        oldX = x;
+        oldY = y;
+    }
+}
+void motion(int x, int y) { ///week13_step03-2
+    teapotX += (x - oldX)/150.0*3;
+    teapotY -= (y - oldY)/150.0*3;
+    oldX = x;
+    oldY = y;
+    glutPostRedisplay();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week12");
+
+    glutMotionFunc(motion); ///week13_step03-2
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
+
+    glutMainLoop();
+}
+```
+
+## step03-2_今天最後的程式, 利用 motion()裡的 printf()來印出程式碼, 幫忙找出 T-R-T 最重要的下面的T,把關節的旋轉中心移到正中心。上面的T就把座標正負倒過來, 中間夾了 glRotatef()做旋轉, 前後要有 glPushMatrix()和 glPopMatrix()包起來。程式碼就這樣慢慢長出來。一層層做下去,便能做出階層性轉動, 也就是上手臂會帶動下手臂。期末作品快要完成囉
+
+
+備份到雲端
+- git add .
+- git commit -m week14
+- git push
+
+```cpp
+///Final_Project 之後都用同一個程式,來進行 Final Project
+#include <stdio.h> ///要檔案的Input/Output
+#include <GL/glut.h>
+#include "glm.h" ///week13_step02-2
+///week13_step02-2 再把 glm.cpp 在左邊 Add files 加進去
+GLMmodel * head = NULL;///week13_step02-2
+GLMmodel * body = NULL;///week13_step02-2
+GLMmodel * uparmR = NULL;
+GLMmodel * lowarmR = NULL;
+int show[4] = {1,1,1,1}; ///week14_step03_1 都秀出來 ///week13_step03-1
+int ID = 3; ///week14_step03_1 設定關節 ID
+float teapotX = 0, teapotY = 0;
+float angle = 0;
+FILE * fout = NULL;///step02-1
+FILE * fin = NULL;///step02-2
+void keyboard(unsigned char key, int x, int y) {///week13_step03-1
+    if(key=='0') ID = 0; ///week14_step03_1 ///show[0] = ! show[0];///week13_step03-1
+    if(key=='1') ID = 1; ///week14_step03_1 ///show[1] = ! show[1];///week13_step03-1
+    if(key=='2') ID = 2; ///week14_step03_1 ///show[2] = ! show[2];///week13_step03-1
+    if(key=='3') ID = 3; ///week14_step03_1 ///show[3] = ! show[3];///week13_step03-1
+    glutPostRedisplay();///week13_step03-1
+}///week13_step03-1
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    if(head==NULL){///week13_step02-2
+        head = glmReadOBJ("model/head.obj");///week13_step02-2
+        body = glmReadOBJ("model/body.obj");
+        uparmR = glmReadOBJ("model/uparmR.obj");
+        lowarmR = glmReadOBJ("model/lowarmR.obj");
+        ///glmUnitize(head); ///week13_step02-2 之後會改
+    }///week13_step02-2
+    glPushMatrix();
+        glScalef(0.3, 0.3, 0.3);///week13_step02-3
+        glPushMatrix();///week13_step03-2
+            ///glTranslatef(teapotX, teapotY, 0); ///week13_step03-2
+
+            if(ID==0) glColor3f(1,0,0);///week14_step03_1 秀紅色
+            else glColor3f(1,1,1);///week14_step03_1 秀白色
+            if(show[0]) glmDraw(head, GLM_MATERIAL);///week13_step02-3
+        glPopMatrix();///week13_step03-2
+
+        if(ID==1) glColor3f(1,0,0);///week14_step03_1 秀紅色
+        else glColor3f(1,1,1);///week14_step03_1 秀白色
+        if(show[1]) glmDraw(body, GLM_MATERIAL);///week13_step02-2
+
+        glPushMatrix(); ///week14_step03_2
+            ///glTranslatef(teapotX, teapotY, 0); ///week14_step03_2 要設定 TRT
+            glTranslatef(-1.360000, +0.360000, 0); ///week14_step03_2
+            glRotatef(angle, 0, 0, 1); ///week14_step03_2
+            glTranslatef(1.360000, -0.360000, 0); ///week14_step03_2
+
+            if(ID==2) glColor3f(1,0,0);///week14_step03_1 秀紅色
+            else glColor3f(1,1,1);///week14_step03_1 秀白色
+            if(show[2]) glmDraw(uparmR, GLM_MATERIAL);///week13_step02-3
+
+            glPushMatrix();  ///week14_step03_2
+                ///glTranslatef(teapotX, teapotY, 0); ///week14_step03_2 要設定 TRT
+                glTranslatef(-1.959999, +0.080000, 0);
+                glRotatef(angle, 0, 0, 1);
+                glTranslatef(1.959999, -0.080000, 0);
+
+                if(ID==3) glColor3f(1,0,0);///week14_step03_1 秀紅色
+                else glColor3f(1,1,1);///week14_step03_1 秀白色
+                if(show[3]) glmDraw(lowarmR, GLM_MATERIAL);///week13_step02-3
+            glPopMatrix();  ///week14_step03_2
+        glPopMatrix(); ///week14_step03_2
+
+
+    glPopMatrix();
+    glColor3f(0,1,0);  ///week14_step03_2 綠色的
+    glutSolidTeapot( 0.02 ); ///week14_step03_2
+    glutSwapBuffers();
+}
+int oldX=0, oldY=0; ///week13_step03-2
+void mouse(int button, int state, int x, int y) {
+    if(state==GLUT_DOWN){
+        oldX = x;
+        oldY = y;
+    }
+}
+void motion(int x, int y) { ///week13_step03-2
+    teapotX += (x - oldX)/150.0*3;
+    teapotY -= (y - oldY)/150.0*3;
+    printf("glTranslatef(%f, %f, 0);\n", teapotX, teapotY); ///week14_step03_2
+    angle += x-oldX; ///week14_step03_2
+    oldX = x;
+    oldY = y;
+    glutPostRedisplay();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week12");
+
+    glutMotionFunc(motion); ///week13_step03-2
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
+
+    glutMainLoop();
+}
+```
