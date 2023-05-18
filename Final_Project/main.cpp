@@ -7,15 +7,16 @@ GLMmodel * head = NULL;///week13_step02-2
 GLMmodel * body = NULL;///week13_step02-2
 GLMmodel * uparmR = NULL;
 GLMmodel * lowarmR = NULL;
-int show[4] = {1,0,0,0}; ///week13_step03-1
+int show[4] = {1,1,1,1}; ///week14_step03_1 都秀出來 ///week13_step03-1
+int ID = 2; ///week14_step03_1 設定關節 ID
 float teapotX = 0, teapotY = 0;
 FILE * fout = NULL;///step02-1
 FILE * fin = NULL;///step02-2
 void keyboard(unsigned char key, int x, int y) {///week13_step03-1
-    if(key=='0') show[0] = ! show[0];///week13_step03-1
-    if(key=='1') show[1] = ! show[1];///week13_step03-1
-    if(key=='2') show[2] = ! show[2];///week13_step03-1
-    if(key=='3') show[3] = ! show[3];///week13_step03-1
+    if(key=='0') ID = 0; ///week14_step03_1 ///show[0] = ! show[0];///week13_step03-1
+    if(key=='1') ID = 1; ///week14_step03_1 ///show[1] = ! show[1];///week13_step03-1
+    if(key=='2') ID = 2; ///week14_step03_1 ///show[2] = ! show[2];///week13_step03-1
+    if(key=='3') ID = 3; ///week14_step03_1 ///show[3] = ! show[3];///week13_step03-1
     glutPostRedisplay();///week13_step03-1
 }///week13_step03-1
 void display()
@@ -32,10 +33,22 @@ void display()
         glScalef(0.3, 0.3, 0.3);///week13_step02-3
         glPushMatrix();///week13_step03-2
             glTranslatef(teapotX, teapotY, 0); ///week13_step03-2
+
+            if(ID==0) glColor3f(1,0,0);///week14_step03_1 秀紅色
+            else glColor3f(1,1,1);///week14_step03_1 秀白色
             if(show[0]) glmDraw(head, GLM_MATERIAL);///week13_step02-3
         glPopMatrix();///week13_step03-2
+
+        if(ID==1) glColor3f(1,0,0);///week14_step03_1 秀紅色
+        else glColor3f(1,1,1);///week14_step03_1 秀白色
         if(show[1]) glmDraw(body, GLM_MATERIAL);///week13_step02-2
+
+        if(ID==2) glColor3f(1,0,0);///week14_step03_1 秀紅色
+        else glColor3f(1,1,1);///week14_step03_1 秀白色
         if(show[2]) glmDraw(uparmR, GLM_MATERIAL);///week13_step02-3
+
+        if(ID==3) glColor3f(1,0,0);///week14_step03_1 秀紅色
+        else glColor3f(1,1,1);///week14_step03_1 秀白色
         if(show[3]) glmDraw(lowarmR, GLM_MATERIAL);///week13_step02-3
         ///week13_step03-1 加上 if(show[??]) ...
     glPopMatrix();
