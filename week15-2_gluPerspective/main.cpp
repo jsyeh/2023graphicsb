@@ -29,7 +29,7 @@ static void resize(int width, int height)///week15_step02_2
 {   ///week15_step02_2 aspective ratio 長寬比
     const float ar = (float) width / (float) height;
 
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, width, height); ///week15_step02_2 設定視窗的範圍
 
     glMatrixMode(GL_PROJECTION); ///week15_step02_2 切換成投影矩陣
     glLoadIdentity(); ///week15_step02_2 設成單位矩陣
