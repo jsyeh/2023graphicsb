@@ -2560,3 +2560,293 @@ int main(int argc, char** argv)
     glutMainLoop();
 }
 ```
+
+
+# Week15
+電腦圖學 2023-05-25 Week15
+1. 主題: 攝影機 Camera
+2. 主題: 投影、運鏡 gluPerspective(), gluLookAt()
+3. 期末作品
+
+## step01-1_今天要教 Camera, 所以把 jsyeh.org 的 3dcg10 裡,把 windows.zip 及 data.zip 解壓縮好, 便可以把 Projection.exe 範例跑來看看。首先先了解 gluLookAt()這個「運鏡」相關的9個參數。前3個參數, 是 eye 眼睛的位置, 中間3個參數center是你要看的中心點的座標。最後3個參數up比較奇怪, 是拿相機時,相機的畫面上向,是向著哪個方向, 這也決定是橫拍、直拍的關鍵。
+
+jsyeh.org/3dcg10
+
+windows.zip
+
+data.zip
+
+## step01-2_要開GLUT專案 week15-1_gluLookAt, 有了GitHub的幫忙, 程式直接放在我們的2023graphicsb倉庫裡,使用 之前 Final_Project的 freeglut 目錄, 就不用安裝 freeglut了。程式裡,把 main()裡面加 glutMotionFunc(motion) 註冊motion()函式, 前面則是寫好motion()函式, 裡面會算出 eyeX 及 eyeY 的值, 再照著移動 gluLookAt()裡的眼睛位置, 並更新畫面。
+
+安裝 Git, 開 Git Bash
+cd desktop      進入桌面
+git clone https://github.com/.../2023graphicsb
+cd 2023graphics 進入你的倉庫目錄(重要)
+start .         開檔案總管
+
+接下來, 開你的專案, 並增加程式
+
+```cpp=124
+///前略
+///Week15-1_gluLookAt 專案, 在 int main()之前, 加入 void motion()
+float eyeX = 0, eyeY = 0; ///week15_step01_2
+void motion(int x, int y) { ///week15_step01_2 加 motion()
+    eyeX = 3*(x-320)/320.0; ///week15_step01_2 算出eyeX的座標
+    eyeY = 3*(240-y)/240.0; ///week15_step01_2 算出eyeY的座標
+    glLoadIdentity(); ///week15_step01_2 還原成最開始的 單位矩陣
+    gluLookAt(eyeX, eyeY, -3,    0, 0, -6,   0, 1, 0);///week15_step01_2
+    ///試試運鏡  eye位置        中間主角    up向量
+    glutPostRedisplay(); ///week15_step01_2 重畫畫面
+}
+/* Program entry point */
+int main(int argc, char *argv[])
+{
+    glutInit(&argc, argv);
+    glutInitWindowSize(640,480); ///step請注意這裡,有 640x480的視窗
+    glutInitWindowPosition(10,10);
+    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+
+    glutCreateWindow("GLUT Shapes");
+
+    glutMotionFunc(motion); ///week15_step01_2 加 motion()
+    glutReshapeFunc(resize);
+    glutDisplayFunc(display);
+    glutKeyboardFunc(key);
+    glutIdleFunc(idle);
+	//下略
+```
+
+
+## step02-1_接下來嘗試在課本範例,修改 投影, 分別試垂直投影glOrtho(), 還有透視投影 glFrustum() gluPerspective(), 其中 glOrtho() 是預設的投影, glFrustum()會變成有角度張開的感覺, gluPerspective()的參數比較容易設定。
+
+
+gluPerspective(fovy, aspect, zNear, zFar);
+
+fov: field of view (y方向) 視野的張開的角度
+
+aspect: aspect ratio 長寬比
+
+zNear 
+
+zFar
+
+## step02-2_接下來寫程式, GLUT專案 week15-2_gluPerspective 裡面要試 glOrtho() glFrustum() gluPerspective()。先照著glFrustum()的參數,改成 glOrtho()時, 太大了看不到全貌, 所以把左右下上的範圍加大3倍, 便能看到正正的圖形。接下來改用 gluPerspective(60, ar, 0.01, 1000) 又可以看到另外一種透視投影的畫面, 參數比較好理解。
+
+```cpp
+static void resize(int width, int height)///week15_step02_2
+{   ///week15_step02_2 aspective ratio 長寬比
+    const float ar = (float) width / (float) height;
+
+    glViewport(0, 0, width, height); ///week15_step02_2 設定視窗的範圍
+
+    glMatrixMode(GL_PROJECTION); ///week15_step02_2 切換成投影矩陣
+    glLoadIdentity(); ///week15_step02_2 設成單位矩陣
+    ///glFrustum(-ar, ar, -1.0, 1.0, 2.0, 100.0);
+    ///glOrtho(-ar*3, ar*3, -1.0*3, 1.0*3, 2.0, 100.0); ///week15_step02_2
+    gluPerspective(60, ar, 0.01, 1000); ///week15_step02_2
+
+    glMatrixMode(GL_MODELVIEW); ///week15_step02_2 切換成 model view 矩陣
+    glLoadIdentity(); ///week15_step02_2 設成單位矩陣
+}
+```
+
+## step02-3_工作到一半, 記得備份到 GitHub
+
+準備備份
+File-Save everything
+git status 紅色
+git add .  加進帳冊
+git status 綠色
+
+確認修改
+git config --global user.email jsyeh@gmail.com
+git config --global user.name jsyeh
+git commit -m week15
+
+推送上雲端
+git push
+
+## step03-1_今天最後一個GLUT小專案week15-3_gluPerspective_gluLookAt, 裡面先把 10行 GLUT程式準備好, 然後加上 今天第一節課教的 motion()函式, 在裡面改變 gluLookAt()的值。
+
+```cpp
+///week15-3_gluPerspective_gluLookAt
+#include <GL/glut.h>
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+    glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+void motion(int x, int y) {
+    glLoadIdentity();
+    float eyeX = (x-150)/150.0,  eyeY = (150-y)/150.0;
+    gluLookAt(eyeX,eyeY,1,  0,0,0,  0,1,0);
+    glutPostRedisplay();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week115");
+
+    glutMotionFunc(motion);///step03-1
+    glutDisplayFunc(display);
+
+    glutMainLoop();
+}
+```
+
+```cpp
+///week15-3_gluPerspective_gluLookAt
+#include <GL/glut.h>
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+    glutSolidTeapot( 0.3 );
+    glutSwapBuffers();
+}
+void motion(int x, int y) {///step03-1
+    glLoadIdentity();
+    float eyeX = (x-150)/150.0,  eyeY = (150-y)/150.0; ///step03-1
+    gluLookAt(eyeX,eyeY,1,  0,0,0,  0,1,0);///step03-1
+    glutPostRedisplay();///step03-1
+}
+void reshape(int w, int h) { ///step03-2
+    float ar = w / (float) h;
+    glViewport(0, 0, w, h); ///step03-2
+
+    glMatrixMode(GL_PROJECTION); ///step03-2
+    glLoadIdentity(); ///step03-2
+    gluPerspective(60, ar, 0.01, 1000); ///step03-2
+
+    glMatrixMode(GL_MODELVIEW); ///step03-2
+    glLoadIdentity(); ///step03-2
+    gluLookAt(0,0,1,  0,0,0,  0,1,0); ///step03-2
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE|GLUT_DEPTH);
+    glutCreateWindow("week115");
+
+    glutReshapeFunc(reshape);///step03-2
+    glutMotionFunc(motion);///step03-1
+    glutDisplayFunc(display);
+
+    glutMainLoop();
+}
+```
+
+## step03-2_Final_Project拿來改一改, 先把 float angle=0; 改成 float angle[20] = {}; 陣列, 再把 每個關節的 angle 改成對應的 angle[0] angle[1] angle[2] angle[3] 等。最後 motion()裡, 改變 angle[ID] += x - oldX; 便能專心改特定關節的 angle[i] 的值。之後用 for迴圈再備份到硬碟裡。
+
+```cpp
+///week15_03_03 要把我們的關節angle,變成陣列
+/// float angle; 改成 float angle[20] = {} ;
+///之後的 angle[0], angle[1] angle[2]
+/// motion裡, 有改變 angle值, 換成 angle[ID]
+
+///Final_Project 之後都用同一個程式,來進行 Final Project
+#include <stdio.h> ///要檔案的Input/Output
+#include <GL/glut.h>
+#include "glm.h" ///week13_step02-2
+///week13_step02-2 再把 glm.cpp 在左邊 Add files 加進去
+GLMmodel * head = NULL;///week13_step02-2
+GLMmodel * body = NULL;///week13_step02-2
+GLMmodel * uparmR = NULL;
+GLMmodel * lowarmR = NULL;
+int show[4] = {1,1,1,1}; ///week14_step03_1 都秀出來 ///week13_step03-1
+int ID = 3; ///week14_step03_1 設定關節 ID
+float teapotX = 0, teapotY = 0;
+float angle[20] = {};///week15_03_03
+///float angle = 0;
+FILE * fout = NULL;///step02-1
+FILE * fin = NULL;///step02-2
+void keyboard(unsigned char key, int x, int y) {///week13_step03-1
+    if(key=='0') ID = 0; ///week14_step03_1 ///show[0] = ! show[0];///week13_step03-1
+    if(key=='1') ID = 1; ///week14_step03_1 ///show[1] = ! show[1];///week13_step03-1
+    if(key=='2') ID = 2; ///week14_step03_1 ///show[2] = ! show[2];///week13_step03-1
+    if(key=='3') ID = 3; ///week14_step03_1 ///show[3] = ! show[3];///week13_step03-1
+    glutPostRedisplay();///week13_step03-1
+}///week13_step03-1
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    if(head==NULL){///week13_step02-2
+        head = glmReadOBJ("model/head.obj");///week13_step02-2
+        body = glmReadOBJ("model/body.obj");
+        uparmR = glmReadOBJ("model/uparmR.obj");
+        lowarmR = glmReadOBJ("model/lowarmR.obj");
+        ///glmUnitize(head); ///week13_step02-2 之後會改
+    }///week13_step02-2
+    glPushMatrix();
+        glScalef(0.3, 0.3, 0.3);///week13_step02-3
+        glPushMatrix();///week13_step03-2
+            ///glTranslatef(teapotX, teapotY, 0); ///week13_step03-2
+
+            if(ID==0) glColor3f(1,0,0);///week14_step03_1 秀紅色
+            else glColor3f(1,1,1);///week14_step03_1 秀白色
+            if(show[0]) glmDraw(head, GLM_MATERIAL);///week13_step02-3
+        glPopMatrix();///week13_step03-2
+
+        if(ID==1) glColor3f(1,0,0);///week14_step03_1 秀紅色
+        else glColor3f(1,1,1);///week14_step03_1 秀白色
+        if(show[1]) glmDraw(body, GLM_MATERIAL);///week13_step02-2
+
+        glPushMatrix(); ///week14_step03_2
+            ///glTranslatef(teapotX, teapotY, 0); ///week14_step03_2 要設定 TRT
+            glTranslatef(-1.360000, +0.500000, 0); ///week14_step03_2
+            glRotatef(angle[2], 0, 0, 1); ///week14_step03_2
+            glTranslatef(1.360000, -0.500000, 0); ///week14_step03_2
+
+            if(ID==2) glColor3f(1,0,0);///week14_step03_1 秀紅色
+            else glColor3f(1,1,1);///week14_step03_1 秀白色
+            if(show[2]) glmDraw(uparmR, GLM_MATERIAL);///week13_step02-3
+
+            glPushMatrix();  ///week14_step03_2
+                ///glTranslatef(teapotX, teapotY, 0); ///week14_step03_2 要設定 TRT
+                glTranslatef(-1.959999, +0.080000, 0);
+                glRotatef(angle[3], 0, 0, 1);
+                glTranslatef(1.959999, -0.080000, 0);
+
+                if(ID==3) glColor3f(1,0,0);///week14_step03_1 秀紅色
+                else glColor3f(1,1,1);///week14_step03_1 秀白色
+                if(show[3]) glmDraw(lowarmR, GLM_MATERIAL);///week13_step02-3
+            glPopMatrix();  ///week14_step03_2
+        glPopMatrix(); ///week14_step03_2
+
+
+    glPopMatrix();
+    glColor3f(0,1,0);  ///week14_step03_2 綠色的
+    glutSolidTeapot( 0.02 ); ///week14_step03_2
+    glutSwapBuffers();
+}
+int oldX=0, oldY=0; ///week13_step03-2
+void mouse(int button, int state, int x, int y) {
+    if(state==GLUT_DOWN){
+        oldX = x;
+        oldY = y;
+    }
+}
+void motion(int x, int y) { ///week13_step03-2
+    teapotX += (x - oldX)/150.0*3;
+    teapotY -= (y - oldY)/150.0*3;
+    printf("glTranslatef(%f, %f, 0);\n", teapotX, teapotY); ///week14_step03_2
+    angle[ID] += x-oldX; ///week15_step03_03
+    oldX = x;
+    oldY = y;
+    glutPostRedisplay();
+}
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("week12");
+
+    glutMotionFunc(motion); ///week13_step03-2
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
+
+    glutMainLoop();
+}
+```

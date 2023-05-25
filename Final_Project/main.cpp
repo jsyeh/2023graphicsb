@@ -1,3 +1,8 @@
+///week15_03_03 要把我們的關節angle,變成陣列
+/// float angle; 改成 float angle[20] = {} ;
+///之後的 angle[0], angle[1] angle[2]
+/// motion裡, 有改變 angle值, 換成 angle[ID]
+
 ///Final_Project 之後都用同一個程式,來進行 Final Project
 #include <stdio.h> ///要檔案的Input/Output
 #include <GL/glut.h>
@@ -10,7 +15,8 @@ GLMmodel * lowarmR = NULL;
 int show[4] = {1,1,1,1}; ///week14_step03_1 都秀出來 ///week13_step03-1
 int ID = 3; ///week14_step03_1 設定關節 ID
 float teapotX = 0, teapotY = 0;
-float angle = 0;
+float angle[20] = {};///week15_03_03
+///float angle = 0;
 FILE * fout = NULL;///step02-1
 FILE * fin = NULL;///step02-2
 void keyboard(unsigned char key, int x, int y) {///week13_step03-1
@@ -46,9 +52,9 @@ void display()
 
         glPushMatrix(); ///week14_step03_2
             ///glTranslatef(teapotX, teapotY, 0); ///week14_step03_2 要設定 TRT
-            glTranslatef(-1.360000, +0.360000, 0); ///week14_step03_2
-            glRotatef(angle, 0, 0, 1); ///week14_step03_2
-            glTranslatef(1.360000, -0.360000, 0); ///week14_step03_2
+            glTranslatef(-1.360000, +0.500000, 0); ///week14_step03_2
+            glRotatef(angle[2], 0, 0, 1); ///week14_step03_2
+            glTranslatef(1.360000, -0.500000, 0); ///week14_step03_2
 
             if(ID==2) glColor3f(1,0,0);///week14_step03_1 秀紅色
             else glColor3f(1,1,1);///week14_step03_1 秀白色
@@ -57,7 +63,7 @@ void display()
             glPushMatrix();  ///week14_step03_2
                 ///glTranslatef(teapotX, teapotY, 0); ///week14_step03_2 要設定 TRT
                 glTranslatef(-1.959999, +0.080000, 0);
-                glRotatef(angle, 0, 0, 1);
+                glRotatef(angle[3], 0, 0, 1);
                 glTranslatef(1.959999, -0.080000, 0);
 
                 if(ID==3) glColor3f(1,0,0);///week14_step03_1 秀紅色
@@ -83,7 +89,7 @@ void motion(int x, int y) { ///week13_step03-2
     teapotX += (x - oldX)/150.0*3;
     teapotY -= (y - oldY)/150.0*3;
     printf("glTranslatef(%f, %f, 0);\n", teapotX, teapotY); ///week14_step03_2
-    angle += x-oldX; ///week14_step03_2
+    angle[ID] += x-oldX; ///week15_step03_03
     oldX = x;
     oldY = y;
     glutPostRedisplay();
