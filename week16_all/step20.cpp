@@ -104,7 +104,7 @@ void display() {
 
                 glPushMatrix();
                     glTranslatef(+4.40, +18.53, 0 );
-                    glRotatef(angle[5], 0, 1, 0);
+                    glRotatef(angle[4], 0, 1, 0);
                     glRotatef(angle2[4], 1, 0, 0);
                     glTranslatef(-4.40, -18.53, 0 );///glTranslatef(teapotX, teapotY, 0);
                     glmDraw(hand2, GLM_MATERIAL|GLM_TEXTURE);
